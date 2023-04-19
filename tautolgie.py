@@ -6,7 +6,7 @@ import copy
 
 class Formula():
     registry = set()
-    variables_dict = None
+    
     sprzecznosc = False
 
     def __init__(self, is_self_standing=True):
@@ -14,19 +14,20 @@ class Formula():
         self.comb = [(True,False),(False,True),(False,False),(True,True)]
         Formula.registry.add(self)   
         self.branch = []
+        self.variables_dict = None
         self.value = None
     def generate_possible_solutions(self,values):
        return list(itertools.product(*[[False, True] if value is None else [value] for value in values]))
      
     def set_variables(self,variables):
-        Formula.variables_dict = variables
+        self.variables_dict = variables
         print(f'Zainicjalizowano zmiennymi: {self.variables_dict}')
     
     def gen_values(self,func_value):
         status = []
         self.value = func_value
         for l in self.arguments:
-            if isinstance(l,Variable): #and l.variables_dict[l.letter] !=:
+            if isinstance(l,Variable) and l.variables_dict[l.letter] != None:
                 #print(l.letter,l.variables_dict[l.letter])
                 status.append(l.variables_dict[l.letter])
             else:
@@ -41,16 +42,18 @@ class Formula():
             self.values = set(pairs) - set(combs)
             
         print(type(self).__name__,self.values,"\n")
-        if len(self.values) == 0:
-            Formula.sprzecznosc = True
-        for val in self.values:
-            leaf = copy.deepcopy(self)
+        # if len(self.values) == 0:
+        #     Formula.sprzecznosc = True
+            
+        leafs = [copy.deepcopy(self) for leaf in self.values]
+        for val,leaf in zip(self.values,leafs):
             for i, f in enumerate(leaf.arguments):
                 
                 if isinstance(f, Variable):
                     f.set_value(val[i])
                 else:
                     f.gen_values(val[i])
+                    print("======================================")
             self.branch.append(leaf)
             
 
@@ -66,7 +69,7 @@ class Variable(Formula):
     def set_value(self, value):
         self.value = value
         #if Formula.variables_dict[self.letter] == None:
-        Formula.variables_dict[self.letter] = value
+        self.variables_dict[self.letter] = value
         print(f"Zmienna zaktualizowana {self.letter}: {value}")
         # elif Formula.variables_dict[self.letter] == value:
         #     print("Spojnosc zmiennych")
@@ -276,7 +279,8 @@ def check_if_tautology(f: Formula) -> bool:
 
 def short_check(f: Formula) -> bool:
     variables = {o.letter: None for o in f.registry if isinstance(o, Variable)}
-    f.set_variables(variables)
+    for obj in f.registry:
+        obj.set_variables(variables)
     
     f.gen_values(False)
     if f.sprzecznosc:
