@@ -1,0 +1,4 @@
+// Parse Tree
+digraph {
+	1 [label=<__main__.Implication object at 0x000001CA408C86A0>]
+}
