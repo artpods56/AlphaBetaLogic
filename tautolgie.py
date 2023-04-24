@@ -4,57 +4,154 @@ from ply import lex, yacc
 import itertools
 import copy
 
+class Tree:
+    def __init__(self):
+        self.core = []
+    
+    def insert_object(self,leafs):
+        if not self.core:
+            for o in leafs:
+                self.core.append([o])
+        else:
+            self.update_branchs(self.core, leafs)
+
+    def update_branchs(self,branch,leafs):
+        c = 0
+        for b in branch:
+            if isinstance(b, list):
+                c += 1
+                self.update_branchs(b,leafs)
+        if c == 0:
+            if len(leafs) == 1:
+                branch.append(leafs[0])
+            else:
+                branch.append([[l] for l in leafs])
+                
+    def update_dicts(self,var_dict):
+        pass
+            
+                
+tree = Tree()
+
 class Formula():
     registry = set()
     
-    sprzecznosc = False
-
     def __init__(self, is_self_standing=True):
         self.is_self_standing = is_self_standing
         self.comb = [(True,False),(False,True),(False,False),(True,True)]
         Formula.registry.add(self)   
-        self.branch = []
-        self.variables_dict = None
+        
         self.value = None
+        self.values = None
+        self.variables_dict = None
+        self.status = []
+        
     def generate_possible_solutions(self,values):
        return list(itertools.product(*[[False, True] if value is None else [value] for value in values]))
      
     def set_variables(self,variables):
-        self.variables_dict = variables
-        print(f'Zainicjalizowano zmiennymi: {self.variables_dict}')
+        vars_copy = copy.copy(variables)
+        self.variables_dict = vars_copy
+        if not isinstance(self, Variable):
+            for obj in self.arguments:
+                obj.set_variables(vars_copy)
+    
+    def set_all(self,letter,value):     
+        if isinstance(self, Variable) and self.letter == letter:
+            self.set_value(value)
+            return
+        else:
+            for o in self.arguments:
+                if not isinstance(o, (Variable,Negation)):
+                    o.set_all(letter,value)
+    
+    def get_variables(self):
+        return self.variables_dict
     
     def gen_values(self,func_value):
-        status = []
-        self.value = func_value
-        for l in self.arguments:
-            if isinstance(l,Variable) and l.variables_dict[l.letter] != None:
-                #print(l.letter,l.variables_dict[l.letter])
-                status.append(l.variables_dict[l.letter])
-            else:
-                status.append(None)
-        #print("lewa i prawa",left,right)
-        pairs = self.generate_possible_solutions(status)
-        print(f"Status: {status}\nWygenerowano: {pairs} \nWartosc funktora: {func_value}")
-        combs = self.get_pairs(pairs)
+
+        #print(f"Status: {status}\nWygenerowano: {pairs} \nWartosc funktora: {self.value}")
+        #print(f"Slownik: {self.variables_dict}")
+        combs = self.get_pairs(self.comb)
+        
         if self.is_self_standing or func_value == False:
             self.values = set(combs)
         elif func_value == True:
-            self.values = set(pairs) - set(combs)
+            self.values = set(self.comb) - set(combs)
             
-        print(type(self).__name__,self.values,"\n")
-        # if len(self.values) == 0:
-        #     Formula.sprzecznosc = True
-            
-        leafs = [copy.deepcopy(self) for leaf in self.values]
+
+        self.value = func_value
+        for l in self.arguments:
+            if isinstance(l,Variable) and l.variables_dict[l.letter] != None:
+                self.status.append(l.variables_dict[l.letter])
+            else:
+                self.status.append(None)
+        pairs = self.generate_possible_solutions(self.status)        
+        
+        leafs = [self for leaf in self.values]
+        
+        
+        self.values = [val for val in self.values if val in pairs]
+        
+        tree.insert_object(leafs) 
+        
         for val,leaf in zip(self.values,leafs):
-            for i, f in enumerate(leaf.arguments):
-                
-                if isinstance(f, Variable):
-                    f.set_value(val[i])
+            
+            
+            
+
+            #if val not in pairs:
+            #    continue
+            print(pairs)
+            print(type(leaf).__name__,leaf.status,val)
+            objects = [[value,obj] for value,obj in zip(val,leaf.arguments)]
+            sorted_arguments = sorted(objects, key=lambda f: not isinstance(f[1], Variable))
+            
+            for pack in sorted_arguments:
+                val, arg = pack[0], pack[1]
+                if isinstance(arg, Variable):
+                    updated_variables = arg.set_value(val)
+                    leaf.set_variables(updated_variables)
+                    
+                    leaf.set_all(arg.letter,val)
+                    #print(leaf.variables_dict)
                 else:
-                    f.gen_values(val[i])
-                    print("======================================")
-            self.branch.append(leaf)
+                    
+                    
+                    updated_variables = arg.gen_values(val)
+                    arg.set_variables(updated_variables)
+        return self.variables_dict    
+            # for pack in sorted_arguments:
+            #     val, arg = pack[0], pack[1]
+            #     if not isinstance(arg, Variable):
+            #         arg.gen_values(val)
+            #     else:
+            #         pass
+                
+            
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                #     leaf.variables_dict = arg.set_value(val)
+                #     print(leaf.variables_dict)
+                #     leaf.set_variables(self.variables_dict)
+                # else:
+                #     #arg.set_variables(self.variables_dict)
+                #     arg.gen_values(val)
+                # #print(arg.variables_dict)
+                # arg.set_variables(arg.variables_dict)
+        
+        
+
+    
             
 
    
@@ -64,20 +161,20 @@ class Variable(Formula):
         super().__init__()
         self.letter = letter
         self.value = None
-   
+        self.variables_dict = None
    
     def set_value(self, value):
         self.value = value
-        #if Formula.variables_dict[self.letter] == None:
-        self.variables_dict[self.letter] = value
-        print(f"Zmienna zaktualizowana {self.letter}: {value}")
+        if self.variables_dict[self.letter] == None:
+            self.variables_dict[self.letter] = value
+        #print(f"Zmienna zaktualizowana {self.letter}: {value}")
+        return self.variables_dict
         # elif Formula.variables_dict[self.letter] == value:
         #     print("Spojnosc zmiennych")
         # elif Formula.variables_dict[self.letter] != value:
         #     print("Sprzecznosc zmiennych")
         #     Formula.sprzecznosc == True
-            
-        
+
        
     def to_prefix_notation(self):
         return self.letter
@@ -100,7 +197,7 @@ class Conjunction(Operator):
         super().__init__(CONJUNCTION_PREFIX, arguments)
    
     def get_pairs(self,pairs):
-        return [x for x in self.comb if not(x[0] and x[1])]
+        return [x for x in pairs if not(x[0] and x[1])]
         
 
 class Disjunction(Operator):
@@ -117,7 +214,7 @@ class Implication(Operator):
         super().__init__(IMPLICATION_PREFIX, arguments)
         
     def get_pairs(self,pairs):
-        return [x for x in pairs if not x[0] and x[1]]
+        return [x for x in pairs if x[0] and not x[1]]
         
 
 class Equality(Operator):
@@ -125,11 +222,19 @@ class Equality(Operator):
         super().__init__(EQUALITY_PREFIX, arguments)
    
     def get_pairs(self,pairs):
-        return [x for x in self.comb if not(x[0] == x[1])]
+        return [x for x in pairs if not(x[0] == x[1])]
    
 class Negation(Operator):
     def __init__(self, arguments):
         super().__init__(NEGATION_PREFIX, arguments)
+   
+    def gen_values(self,func_value):
+       
+        self.value = func_value 
+        if isinstance(self.arguments[0],Variable):
+            self.arguments[0].set_value(not func_value)
+        else:
+            self.arguments[0].gen_values(not func_value)
    
     def get_value(self):
         return int(not(self.arguments[0].get_value()))
@@ -279,15 +384,10 @@ def check_if_tautology(f: Formula) -> bool:
 
 def short_check(f: Formula) -> bool:
     variables = {o.letter: None for o in f.registry if isinstance(o, Variable)}
-    for obj in f.registry:
-        obj.set_variables(variables)
-    
+    f.set_variables(variables)
     f.gen_values(False)
-    if f.sprzecznosc:
-        print("Jest tautologia")
-    else:
-        print("Nie jest tautologia")
     
-f = parse_pl_formula_infix_notation('(p <=> q)')
-
+    
+f = parse_pl_formula_infix_notation("((p and (q or r)) => ((p and q) or (p and ~r)))")
+#f = parse_pl_formula_infix_notation("((q or p) => p)")
 short_check(f)
