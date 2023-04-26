@@ -7,6 +7,28 @@ import copy
 class Tree:
     def __init__(self):
         self.core = []
+        
+    def build_tree(self,formula):
+        temp = []
+        for i, l in enumerate(formula.leafs):
+            temp.append([l])
+            for arg in l.arguments:
+                if not isinstance(arg, Variable) and len(arg.leafs)>1:
+                    temp[i].append(self.build_tree(arg))
+                else:
+                    temp[i].append(arg)
+            #temp[i].append([[arg] if not  else arg for arg in l.arguments])
+            #temp.append(self.build_tree(l))
+        self.core = temp
+        
+    
+    
+    def test(self,formula):
+        for l in formula.leafs:
+            print(l)
+        if len(formula.leafs) == 1:
+            return formula.leafs[0]
+        return [[l] for l in formula.leafs]
     
     def insert_object(self,leafs):
         if not self.core:
@@ -45,6 +67,7 @@ class Formula():
         self.values = None
         self.variables_dict = None
         self.status = []
+        self.flag = False
         
     def generate_possible_solutions(self,values):
        return list(itertools.product(*[[False, True] if value is None else [value] for value in values]))
@@ -81,80 +104,64 @@ class Formula():
             
 
         self.value = func_value
+        self.status = []
         for l in self.arguments:
+            # if len(self.status) == 2:
+            #     break
             if isinstance(l,Variable) and l.variables_dict[l.letter] != None:
                 self.status.append(l.variables_dict[l.letter])
+                continue
             else:
                 self.status.append(None)
+                continue
         pairs = self.generate_possible_solutions(self.status)        
         
-        leafs = [self for leaf in self.values]
+        
         
         
         self.values = [val for val in self.values if val in pairs]
+        if not self.values:
+            return self.variables_dict
+        leafs = [copy.deepcopy(self) for leaf in self.values]
+        print(self.status)
+        print([[type(l).__name__, val] for l, val in zip(leafs,self.values)])
+        self.leafs = leafs
         
-        tree.insert_object(leafs) 
-        
+        #print(type(self).__name__,self.status, [l.letter for l in self.arguments if isinstance(l, Variable)], self.variables_dict)
         for val,leaf in zip(self.values,leafs):
             
-            
+            leaf.values = val
             
 
             #if val not in pairs:
             #    continue
-            print(pairs)
-            print(type(leaf).__name__,leaf.status,val)
+            #print(type(leaf).__name__,leaf.status,val)
             objects = [[value,obj] for value,obj in zip(val,leaf.arguments)]
             sorted_arguments = sorted(objects, key=lambda f: not isinstance(f[1], Variable))
             
             for pack in sorted_arguments:
                 val, arg = pack[0], pack[1]
                 if isinstance(arg, Variable):
-                    updated_variables = arg.set_value(val)
-                    leaf.set_variables(updated_variables)
+                    self.variables_dict = arg.set_value(val)
+                    if all(value is not None for value in arg.variables_dict.values()) and self.flag == False:
+                        self.flag = True
+                        print(f"Flaga zmieniona {arg.variables_dict}")
+                    self.set_variables(self.variables_dict)
                     
                     leaf.set_all(arg.letter,val)
                     #print(leaf.variables_dict)
                 else:
-                    
-                    
-                    updated_variables = arg.gen_values(val)
-                    arg.set_variables(updated_variables)
+
+                    # else:
+                    if self.flag == False:
+                        arg.set_variables(self.variables_dict)
+                        
+                    self.variables_dict = arg.gen_values(val)
+                    #updated_variables = arg.gen_values(val)
+                    #arg.set_variables(vals)
         return self.variables_dict    
-            # for pack in sorted_arguments:
-            #     val, arg = pack[0], pack[1]
-            #     if not isinstance(arg, Variable):
-            #         arg.gen_values(val)
-            #     else:
-            #         pass
-                
-            
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                #     leaf.variables_dict = arg.set_value(val)
-                #     print(leaf.variables_dict)
-                #     leaf.set_variables(self.variables_dict)
-                # else:
-                #     #arg.set_variables(self.variables_dict)
-                #     arg.gen_values(val)
-                # #print(arg.variables_dict)
-                # arg.set_variables(arg.variables_dict)
-        
-        
 
     
-            
-
-   
 
 class Variable(Formula):
     def __init__(self, letter: str):
@@ -165,9 +172,10 @@ class Variable(Formula):
    
     def set_value(self, value):
         self.value = value
+        backup = self.variables_dict
         if self.variables_dict[self.letter] == None:
             self.variables_dict[self.letter] = value
-        #print(f"Zmienna zaktualizowana {self.letter}: {value}")
+
         return self.variables_dict
         # elif Formula.variables_dict[self.letter] == value:
         #     print("Spojnosc zmiennych")
@@ -386,8 +394,10 @@ def short_check(f: Formula) -> bool:
     variables = {o.letter: None for o in f.registry if isinstance(o, Variable)}
     f.set_variables(variables)
     f.gen_values(False)
+    tree.build_tree(f)
     
     
-f = parse_pl_formula_infix_notation("((p and (q or r)) => ((p and q) or (p and ~r)))")
-#f = parse_pl_formula_infix_notation("((q or p) => p)")
+f = parse_pl_formula_infix_notation("((q and p) => ((q or r) => r))")
+#f = parse_pl_formula_infix_notation("((p or q) <=> r)")
+#f = parse_pl_formula_infix_notation("((p and (q or ~r)) => ((p and q) or (p and ~r)))")
 short_check(f)
