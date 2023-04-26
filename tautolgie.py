@@ -13,22 +13,25 @@ class Tree:
         for i, l in enumerate(formula.leafs):
             temp.append([l])
             for arg in l.arguments:
-                if not isinstance(arg, Variable) and len(arg.leafs)>1:
+                if not isinstance(arg, Variable):# and len(arg.leafs)>1:
                     temp[i].append(self.build_tree(arg))
                 else:
+                    continue
                     temp[i].append(arg)
             #temp[i].append([[arg] if not  else arg for arg in l.arguments])
             #temp.append(self.build_tree(l))
-        self.core = temp
+        return temp
+        
         
     
     
     def test(self,formula):
-        for l in formula.leafs:
-            print(l)
-        if len(formula.leafs) == 1:
-            return formula.leafs[0]
-        return [[l] for l in formula.leafs]
+        pass
+        # for l in formula.leafs:
+        #     print(l)
+        # if len(formula.leafs) == 1:
+        #     return formula.leafs[0]
+        # return [[self.test(l)] for l in formula.leafs]
     
     def insert_object(self,leafs):
         if not self.core:
@@ -60,7 +63,7 @@ class Formula():
     
     def __init__(self, is_self_standing=True):
         self.is_self_standing = is_self_standing
-        self.comb = [(True,False),(False,True),(False,False),(True,True)]
+        
         Formula.registry.add(self)   
         
         self.value = None
@@ -79,8 +82,10 @@ class Formula():
             for obj in self.arguments:
                 obj.set_variables(vars_copy)
     
-    def set_all(self,letter,value):     
+    def set_all(self,letter,value):   
+        print("test")
         if isinstance(self, Variable) and self.letter == letter:
+            print(self.letter, letter)
             self.set_value(value)
             return
         else:
@@ -123,8 +128,8 @@ class Formula():
         if not self.values:
             return self.variables_dict
         leafs = [copy.deepcopy(self) for leaf in self.values]
-        print(self.status)
-        print([[type(l).__name__, val] for l, val in zip(leafs,self.values)])
+        #print(self.status)
+        #print([[type(l).__name__, val] for l, val in zip(leafs,self.values)])
         self.leafs = leafs
         
         #print(type(self).__name__,self.status, [l.letter for l in self.arguments if isinstance(l, Variable)], self.variables_dict)
@@ -142,19 +147,21 @@ class Formula():
             for pack in sorted_arguments:
                 val, arg = pack[0], pack[1]
                 if isinstance(arg, Variable):
-                    self.variables_dict = arg.set_value(val)
+                    arg.variables_dict = leaf.variables_dict
+                    leaf.variables_dict = arg.set_value(val)
                     if all(value is not None for value in arg.variables_dict.values()) and self.flag == False:
                         self.flag = True
                         print(f"Flaga zmieniona {arg.variables_dict}")
-                    self.set_variables(self.variables_dict)
+                    #self.set_variables(self.variables_dict)
                     
-                    leaf.set_all(arg.letter,val)
+                    leaf.set_all(arg.letter,arg.value)
+                    
                     #print(leaf.variables_dict)
                 else:
-
-                    # else:
-                    if self.flag == False:
-                        arg.set_variables(self.variables_dict)
+                    
+                    arg.variables_dict = leaf.variables_dict
+                    # if self.flag == False:
+                    #     arg.set_variables(self.variables_dict)
                         
                     self.variables_dict = arg.gen_values(val)
                     #updated_variables = arg.gen_values(val)
@@ -173,8 +180,8 @@ class Variable(Formula):
     def set_value(self, value):
         self.value = value
         backup = self.variables_dict
-        if self.variables_dict[self.letter] == None:
-            self.variables_dict[self.letter] = value
+        #if self.variables_dict[self.letter] == None:
+        self.variables_dict[self.letter] = value
 
         return self.variables_dict
         # elif Formula.variables_dict[self.letter] == value:
@@ -197,6 +204,7 @@ class Operator(Formula):
     def __init__(self, prefix: str, arguments: list):
         super().__init__()
         self.prefix = prefix
+        self.comb = [(True,False),(False,True),(False,False),(True,True)]
         self.arguments = arguments
        
 
@@ -394,10 +402,10 @@ def short_check(f: Formula) -> bool:
     variables = {o.letter: None for o in f.registry if isinstance(o, Variable)}
     f.set_variables(variables)
     f.gen_values(False)
-    tree.build_tree(f)
+    tree.core = tree.build_tree(f)
     
     
-f = parse_pl_formula_infix_notation("((q and p) => ((q or r) => r))")
-#f = parse_pl_formula_infix_notation("((p or q) <=> r)")
+# = parse_pl_formula_infix_notation("((q or p) => ((q or r) => r))")
+f = parse_pl_formula_infix_notation("(q => (q and p))")
 #f = parse_pl_formula_infix_notation("((p and (q or ~r)) => ((p and q) or (p and ~r)))")
 short_check(f)
