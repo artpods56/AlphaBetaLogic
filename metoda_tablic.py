@@ -52,7 +52,7 @@ class Operator(Formula):
         self.prefix = prefix
         self.arguments = arguments
         self.exp = None
-        self.fork = [self]
+        self.fork = self
 
     def to_prefix_notation(self):
         prefixed_arguments = list()
@@ -70,31 +70,40 @@ class Conjunction(Operator):
         super().__init__(CONJUNCTION_PREFIX, arguments)
 
     def expand(self):
+        l_arg = self.arguments[0]
+        r_arg = self.arguments[1]
         if self.negation == False:
-            #l_arg = copy.copy(self.arguments[0])
-            #r_arg = copy.copy(self.arguments[1])
-            l_arg = self.arguments[0]
-            r_arg = self.arguments[1]
+
 
             l_arg.fork = r_arg
             r_arg.fork = r_arg
-            # return [[beg, l_arg],[l_arg,r_arg]]
-            return [Vertex(self.fork, l_arg, self.exp), Vertex(l_arg, r_arg, self.exp)]
+            vertex_list = []
+            for f in node.get_end(self.fork):
+                l_copy = copy.copy(l_arg)
+                l_arg.fork = l_copy
+                r_copy = copy.copy(r_arg)
+                r_arg.fork = r_copy
+                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(l_copy, r_copy, self.exp)])
+
+            return vertex_list
         elif self.negation == True:
             self.arguments[0].negation = not self.arguments[0].negation
-            #l_arg = copy.copy(self.arguments[0])
-            l_arg = self.arguments[0]
-            l_arg.exp = "~" + l_arg.exp
-
             self.arguments[1].negation = not self.arguments[1].negation
-            #r_arg = copy.copy(self.arguments[1])
+            l_arg = self.arguments[0]
             r_arg = self.arguments[1]
-
+            l_arg.exp = "~" + l_arg.exp
             r_arg.exp = "~" + r_arg.exp
 
-            l_arg.fork = l_arg
-            r_arg.fork = r_arg
-            return [Vertex(self.fork, l_arg, self.exp), Vertex(self.fork, r_arg, self.exp)]
+            vertex_list = []
+            for f in node.get_end(self.fork):
+
+                l_copy = copy.copy(l_arg)
+                l_arg.fork = l_copy
+                r_copy = copy.copy(r_arg)
+                r_arg.fork = r_copy
+                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(f, r_copy, self.exp)])
+
+            return vertex_list
 
 
 class Disjunction(Operator):
@@ -182,9 +191,9 @@ class Equality(Operator):
 
             #self.arguments[1] = r_arg
             return [nl_arg,nr_arg],[Vertex(self.fork, l_arg, self.exp),
-                    Vertex(self.fork, nl_arg, self.exp),
-                    Vertex(l_arg, r_arg, self.exp),
-                    Vertex(nl_arg, nr_arg, self.exp)]
+                                    Vertex(self.fork, nl_arg, self.exp),
+                                    Vertex(l_arg, r_arg, self.exp),
+                                    Vertex(nl_arg, nr_arg, self.exp)]
 
         elif self.negation == True:
             l_arg = copy.copy(self.arguments[0])
@@ -524,27 +533,32 @@ class Node:
         self.fork = copy.copy(formula)
 
     def grow(self):
-        print(self.stack)
-        end = [self.stack[0]]
         for i, arg in enumerate(self.stack):
-            arg.fork = end
-            end, connections = self.stack[i].expand()
-            # print("ins",ins)
-            # ins = [x for x in ins if not isinstance(x,Variable)]
-            # if ins:
-            #     for o in [x for x in ins if not isinstance(x,Variable)]:
-            #         ins, cons = o.expand()
-            #         self.connections.extend(cons)
-            # #self.connections.extend(ins.expand())
-            # # for o in ins:
-            #     self.stack.insert(i,o)
-            print(connections)
+            connections = self.stack[i].expand()
             self.connections.extend(connections)
-        # for i, arg in enumerate(temp):
-        #     if not isinstance(arg,Variable):
-        #         ins ,connections = temp[i].expand()
-        #         self.connections.extend(connections)
-        # # if not isinstance(argument, Variable):
+
+    def find_leaf_nodes(self,graph, start_node):
+        leaf_nodes = []
+        successors = [x.end for x in graph if x.beg == start_node]
+        print(successors)
+        if len(successors) == 0:
+            leaf_nodes.append(start_node)
+
+        else:
+            for successor in successors:
+                #print(successor)
+                leaf_nodes.extend(self.find_leaf_nodes(graph, successor))
+        return leaf_nodes
+
+    def get_end(self,fork):
+
+        print("Do znalezienia: ",fork.exp)
+        print("Polaczenia",self.connections)
+        ends = self.find_leaf_nodes(self.connections,fork)
+        #ends = [o.end for o in self.connections if fork == o.beg]
+        print("Zwrocone", ends)
+        return ends
+
 
     def display(self):
         def flatten(lst):
@@ -558,11 +572,13 @@ class Node:
                 else:
                     result.append(item)
             return result
-
-        connections = flatten(self.connections)
+        # for o in self.connections:
+        #     print("123", o)
+        print(self.connections[0].end)
+        connections = [[o.beg, o.end] for o in flatten(self.connections)]
         #connections = self.connections
-        print("Polaczenia", [[o.beg, o.end] for o in connections])
-        self.graph.add_edges_from([[o.beg, o.end] for o in connections])
+
+        self.graph.add_edges_from(connections)
         for node in self.graph.nodes():
             self.labels[node] = node.exp
 
@@ -581,7 +597,7 @@ class Vertex:
 
 
 # f = parse_pl_formula_infix_notation("((p <=> ~q) and (~p <=> q))")
-f = parse_pl_formula_infix_notation("(q => (q => p))")#(p => q) and (p => ~q)
+f = parse_pl_formula_infix_notation("(~((~(p and ~(p and q)) and ~(p and q)) and ~((~(p and ~((~(p and ~(p and q)) and ~(p and q)) and q)) and ~(p and q)) and q)) and ~(p and q))")
 # print(check_if_tautology(f))
 node = Node(f)
 node.clear([f])
