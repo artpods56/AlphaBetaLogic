@@ -13,7 +13,7 @@ import copy
 
 class Formula:
     registry = set()
-
+    id = 0
     def __init__(self, is_self_standing=True):
         self.is_self_standing = is_self_standing
         Formula.registry.add(self)
@@ -54,6 +54,7 @@ class Operator(Formula):
         self.exp = None
         self.fork = self
 
+
     def to_prefix_notation(self):
         prefixed_arguments = list()
         for argument in self.arguments:
@@ -64,99 +65,105 @@ class Operator(Formula):
         self.exp = f"({prefixed_arguments[0]} {self.prefix} {prefixed_arguments[1]})"
         return self.exp
 
+    def get_id(self):
+        Formula.id += 1
+        return f"{Formula.id}#"
+
 
 class Conjunction(Operator):
     def __init__(self, arguments):
         super().__init__(CONJUNCTION_PREFIX, arguments)
 
-    def expand(self):
+    def expand(self,node):
         l_arg = self.arguments[0]
         r_arg = self.arguments[1]
-        vertex_list = []
 
-        if not self.negation:
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(l_copy, r_copy, self.exp)])
+        if self.negation == False:
 
+            unique_id = self.get_id()
+            id_tofind = f"{int(unique_id[:-1])-1}#{self.exp}"
+            print(f"Nadane id: { unique_id}")
+            #print(f"Do znalezienia id: {id_tofind}")
+
+            self.exp = unique_id+self.exp
+            vertex_list = []
+            for f in node.get_end(id_tofind):
+                l_copy = copy.copy(l_arg)
+                r_copy = copy.copy(r_arg)
+                vertex_list.extend([Vertex(f, unique_id+l_arg.exp, self.exp), Vertex(unique_id+l_arg.exp, unique_id+r_arg.exp, self.exp)])
             return vertex_list
-        else:
-            l_arg.negation = not l_arg.negation
-            r_arg.negation = not r_arg.negation
+        elif self.negation == True:
+            unique_id = self.get_id()
+            id_tofind = f"{int(unique_id[:-1])-1}#{self.exp}"
+            print(f"Nadane id: { unique_id}")
+            self.arguments[0].negation = not self.arguments[0].negation
+            self.arguments[1].negation = not self.arguments[1].negation
             l_arg.exp = "~" + l_arg.exp
             r_arg.exp = "~" + r_arg.exp
 
+            self.exp = unique_id+self.exp
+            vertex_list = []
+            for f in node.get_end(id_tofind):
+                l_copy = copy.copy(l_arg)
+                l_copy.fork = l_arg
 
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(f, r_copy, self.exp)])
-
+                r_copy = copy.copy(r_arg)
+                r_copy.fork = r_arg
+                vertex_list.extend([Vertex(f, unique_id+l_arg.exp, self.exp), Vertex(f, unique_id+r_arg.exp, self.exp)])
             return vertex_list
+
+
+
 
 
 class Disjunction(Operator):
     def __init__(self, arguments):
         super().__init__(DISJUNCTION_PREFIX, arguments)
 
-    def expand(self):
-        l_arg = self.arguments[0]
-        r_arg = self.arguments[1]
-        vertex_list = []
 
-        if not self.negation:
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(f, r_copy, self.exp)])
-
-            return vertex_list
-        else:
-            r_arg.exp = "~" + r_arg.exp
-            l_arg.exp = "~" + l_arg.exp
-            r_arg.negation = not r_arg.negation
-            l_arg.negation = not l_arg.negation
-
-
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(l_copy, r_copy, self.exp)])
-
-            return vertex_list
 class Implication(Operator):
     def __init__(self, arguments):
         super().__init__(IMPLICATION_PREFIX, arguments)
 
     def expand(self):
-        l_arg = self.arguments[0]
-        r_arg = self.arguments[1]
-        vertex_list = []
-
-        if not self.negation:
-            l_arg.exp = "~" + l_arg.exp
-            l_arg.negation = not l_arg.negation
-
+        if self.negation == False:
+            #l_arg = copy.copy(self.arguments[0])
+            #r_arg = copy.copy(self.arguments[1])
+            self.arguments[0].negation = not self.arguments[0].negation
+            nl_arg = self.arguments[0]
+            r_arg = self.arguments[1]
 
 
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(f, r_copy, self.exp)])
+            nl_arg.exp = "~" + nl_arg.exp
 
-            return vertex_list
-        else:
+
+            end = [nl_arg,r_arg]
+            #r_arg.fork = l_arg
+            # return [[beg, l_arg],[l_arg,r_arg]]
+            print(self.fork)
+            vertex_list = []
+            for f in self.fork:
+                vertex_list.append([Vertex(f.exp, nl_arg.exp, self.exp), Vertex(f.exp, r_arg.exp, self.exp)])
+            print("lista vertexow",vertex_list)
+            return end,vertex_list
+            #return end,[Vertex(self.fork, nl_arg, self.exp), Vertex(self.fork, r_arg, self.exp)]
+
+        elif self.negation == True:
+            l_arg = self.arguments[0]
+            self.arguments[1].negation = not self.arguments[1].negation
+            r_arg = self.arguments[1]
             r_arg.exp = "~" + r_arg.exp
-            r_arg.negation = not r_arg.negation
-
-
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(l_copy, r_copy, self.exp)])
-
-            return vertex_list
+            end = [r_arg]
+            #l_arg.fork = r_arg
+            #r_arg.fork = l_arg
+            vertex_list = []
+            for f in self.fork:
+                l = copy.copy(l_arg)
+                vertex_list.append(
+                    [Vertex(f.exp, l.exp, self.exp), Vertex(l.exp, r_arg.exp, self.exp)])
+            print("lista vertexow",vertex_list)
+            return end,vertex_list
+            #return end,[Vertex(self.fork, l_arg, self.exp), Vertex(l_arg, r_arg, self.exp)]
 
 
 class Equality(Operator):
@@ -164,7 +171,71 @@ class Equality(Operator):
         super().__init__(EQUALITY_PREFIX, arguments)
 
     def expand(self):
-        pass
+        if self.negation == False:
+            #l_arg = copy.copy(self.arguments[0])
+            #r_arg = copy.copy(self.arguments[1])
+            l_arg = copy.copy(self.arguments[0])
+            nl_arg = copy.copy(self.arguments[0])
+            nl_arg.negation = not nl_arg.negation
+            nl_arg.exp = "~" + nl_arg.exp
+
+            r_arg = copy.copy(self.arguments[1])
+            nr_arg = copy.copy(self.arguments[1])
+            nr_arg.negation = not nr_arg.negation
+            nr_arg.exp = "~" + nr_arg.exp
+
+            self.arguments[0].fork = r_arg
+            self.arguments[1].fork = nr_arg
+            # self.arguments[1].negation = not self.arguments[1].negation
+            # l_arg = self.arguments[0]
+            #
+            # self.arguments[0].negation = not self.arguments[0].negation
+            # nl_arg = self.arguments[1]
+            # nl_arg.exp = "~" + nl_arg.exp
+            # l_arg.fork = r_arg
+            # r_arg.fork = r_arg
+            # return [[beg, l_arg],[l_arg,r_arg]]
+            nl_arg.fork = nr_arg
+            nr_arg.fork = nr_arg
+
+
+            #self.arguments[1] = r_arg
+            return [nl_arg,nr_arg],[Vertex(self.fork, l_arg, self.exp),
+                                    Vertex(self.fork, nl_arg, self.exp),
+                                    Vertex(l_arg, r_arg, self.exp),
+                                    Vertex(nl_arg, nr_arg, self.exp)]
+
+        elif self.negation == True:
+            l_arg = copy.copy(self.arguments[0])
+            nl_arg = copy.copy(self.arguments[0])
+            nl_arg.negation = not nl_arg.negation
+            nl_arg.exp = "~" + nl_arg.exp
+
+            r_arg = copy.copy(self.arguments[1])
+            nr_arg = copy.copy(self.arguments[1])
+            nr_arg.negation = not nr_arg.negation
+            nr_arg.exp = "~" + nr_arg.exp
+
+            self.arguments[0].fork = r_arg
+            self.arguments[1].fork = nr_arg
+            # self.arguments[1].negation = not self.arguments[1].negation
+            # l_arg = self.arguments[0]
+            #
+            # self.arguments[0].negation = not self.arguments[0].negation
+            # nl_arg = self.arguments[1]
+            # nl_arg.exp = "~" + nl_arg.exp
+            # l_arg.fork = r_arg
+            # r_arg.fork = r_arg
+            # return [[beg, l_arg],[l_arg,r_arg]]
+            nl_arg.fork = nr_arg
+            nr_arg.fork = nr_arg
+
+
+            #self.arguments[1] = r_arg
+            return [nl_arg,nr_arg],[Vertex(self.fork, l_arg, self.exp),
+                                    Vertex(self.fork, nl_arg, self.exp),
+                                    Vertex(l_arg, nr_arg, self.exp),
+                                    Vertex(nl_arg, r_arg, self.exp)]
 
 class Negation(Operator):
     def __init__(self, arguments):
@@ -181,7 +252,7 @@ class Negation(Operator):
 
     def expand(self, beg, value=False):
         pass
-
+        # return self.arguments[0].expand(beg, value)
 
 
 tokens = [
@@ -443,6 +514,7 @@ class Node:
     def create_stack(self):
         current_branch = self.branch
         self.branch = []
+        # args = [x for x in argument.arguments]
         for arg in self.sort(current_branch):
             if not isinstance(arg, Variable):
                 self.branch.extend(
@@ -472,8 +544,9 @@ class Node:
 
     def grow(self):
         for i, arg in enumerate(self.stack):
-            connections = self.stack[i].expand()
+            connections = self.stack[i].expand(self)
             self.connections.extend(connections)
+
 
     def find_leaf_nodes(self,graph, start_node):
         leaf_nodes = []
@@ -484,22 +557,22 @@ class Node:
 
         else:
             for successor in successors:
+                #print(successor)
                 leaf_nodes.extend(self.find_leaf_nodes(graph, successor))
         return leaf_nodes
 
     def get_end(self,fork):
 
-        print("Do znalezienia: ",fork.exp)
+        print("Do znalezienia: ",fork)
         print("Polaczenia",self.connections)
         ends = self.find_leaf_nodes(self.connections,fork)
+        #ends = [o.end for o in self.connections if fork == o.beg]
         print("Zwrocone", ends)
         return ends
-
-
     def display(self):
         def flatten(lst):
             """
-            Splaszcza liste o dowolnej głebokosci.
+            Recursively flattens a list of any depth.
             """
             result = []
             for item in lst:
@@ -508,15 +581,18 @@ class Node:
                 else:
                     result.append(item)
             return result
-        print(self.connections[0].end)
+        # for o in self.connections:
+        #     print("123", o)
         connections = [[o.beg, o.end] for o in flatten(self.connections)]
+        #connections = self.connections
+
         self.graph.add_edges_from(connections)
         for node in self.graph.nodes():
-            self.labels[node] = node.exp
+            self.labels[node] = node
 
         options = {"edgecolors": "black", "node_size": 1200}
-        pos = hierarchy_pos(self.graph, self.stack[0])
-        #pos = nx.spring_layout(self.graph)
+        #pos = hierarchy_pos(self.graph, self.stack[0].exp)
+        pos = nx.spring_layout(self.graph)
         nx.draw(self.graph, pos=pos, with_labels=True, labels=self.labels, **options)
         plt.show()
 
@@ -529,7 +605,7 @@ class Vertex:
 
 
 # f = parse_pl_formula_infix_notation("((p <=> ~q) and (~p <=> q))")
-f = parse_pl_formula_infix_notation("(~(p or r) or q)")
+f = parse_pl_formula_infix_notation("((p and q) and (p and q))")#(p => q) and (p => ~q)
 # print(check_if_tautology(f))
 node = Node(f)
 node.clear([f])
@@ -537,3 +613,5 @@ node.clear([f])
 node.create_stack()
 node.grow()
 node.display()
+# print(node.stack)
+# %%
