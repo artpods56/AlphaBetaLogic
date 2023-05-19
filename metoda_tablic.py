@@ -1,19 +1,16 @@
+import random
 import re
-import itertools
+import copy
 from ply import lex, yacc
 import networkx as nx
-from networkx.drawing.nx_pydot import graphviz_layout
 import matplotlib
 import matplotlib.pyplot as plt
-
 matplotlib.use('TkAgg')
-import random
-import copy
 
 
 class Formula:
     registry = set()
-
+    counter = 0
     def __init__(self, is_self_standing=True):
         self.is_self_standing = is_self_standing
         Formula.registry.add(self)
@@ -27,23 +24,25 @@ class Variable(Formula):
     def __init__(self, letter: str):
         super().__init__()
         self.letter = letter
-        self.value = None
         self.exp = letter
+        self.color = '#2596be'
 
     def to_prefix_notation(self):
         return self.letter
 
-    def expand(self, beg):
-        arg = self
-        branch = [arg]
-        return branch, [Vertex(beg, arg, self.exp)]
+    def negate(self):
+        self.negation = not self.negation
+        if self.exp[0] == '~':
+            self.exp = self.exp[1:]
+        else:
+            self.exp = '~' + self.exp
 
 
-CONJUNCTION_PREFIX = "and"
-NEGATION_PREFIX = "~"
-EQUALITY_PREFIX = "<=>"
-DISJUNCTION_PREFIX = "or"
-IMPLICATION_PREFIX = "=>"
+CONJUNCTION_PREFIX = 'and'
+NEGATION_PREFIX = '~'
+EQUALITY_PREFIX = '<=>'
+DISJUNCTION_PREFIX = 'or'
+IMPLICATION_PREFIX = '=>'
 
 
 class Operator(Formula):
@@ -52,7 +51,7 @@ class Operator(Formula):
         self.prefix = prefix
         self.arguments = arguments
         self.exp = None
-        self.fork = self
+        self.color = '#2596be'
 
     def to_prefix_notation(self):
         prefixed_arguments = list()
@@ -61,8 +60,15 @@ class Operator(Formula):
                 prefixed_arguments.append(argument.letter)
             else:
                 prefixed_arguments.append(argument.to_prefix_notation())
-        self.exp = f"({prefixed_arguments[0]} {self.prefix} {prefixed_arguments[1]})"
+        self.exp = f'({prefixed_arguments[0]} {self.prefix} {prefixed_arguments[1]})'
         return self.exp
+
+    def negate(self):
+        self.negation = not self.negation
+        if self.exp[0] == '~':
+            self.exp = self.exp[1:]
+        else:
+            self.exp = '~' + self.exp
 
 
 class Conjunction(Operator):
@@ -73,27 +79,27 @@ class Conjunction(Operator):
         l_arg = self.arguments[0]
         r_arg = self.arguments[1]
         vertex_list = []
+        functors_list = []
+        Formula.counter += 1
 
         if not self.negation:
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(l_copy, r_copy, self.exp)])
+            for f in tree.get_end(self):
+                l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
+                functors_list.extend([l_copy, r_copy])
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(l_copy, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
 
-            return vertex_list
+            return functors_list, vertex_list
         else:
-            l_arg.negation = not l_arg.negation
-            r_arg.negation = not r_arg.negation
-            l_arg.exp = "~" + l_arg.exp
-            r_arg.exp = "~" + r_arg.exp
+            for f in tree.get_end(self):
+                l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
+                l_copy.negate()
+                r_copy.negate()
+                functors_list.extend([l_copy, r_copy])
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(f, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
 
-
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(f, r_copy, self.exp)])
-
-            return vertex_list
+            return functors_list, vertex_list
 
 
 class Disjunction(Operator):
@@ -104,27 +110,27 @@ class Disjunction(Operator):
         l_arg = self.arguments[0]
         r_arg = self.arguments[1]
         vertex_list = []
-
+        functors_list = []
+        Formula.counter += 1
         if not self.negation:
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(f, r_copy, self.exp)])
-
-            return vertex_list
+            for f in tree.get_end(self):
+                l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
+                functors_list.extend([l_copy, r_copy])
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(f, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
+            return functors_list, vertex_list
         else:
-            r_arg.exp = "~" + r_arg.exp
-            l_arg.exp = "~" + l_arg.exp
-            r_arg.negation = not r_arg.negation
-            l_arg.negation = not l_arg.negation
+            for f in tree.get_end(self):
+                l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
+                l_copy.negate()
+                r_copy.negate()
+                functors_list.extend([l_copy, r_copy])
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(l_copy, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
+
+            return functors_list, vertex_list
 
 
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(l_copy, r_copy, self.exp)])
-
-            return vertex_list
 class Implication(Operator):
     def __init__(self, arguments):
         super().__init__(IMPLICATION_PREFIX, arguments)
@@ -133,30 +139,27 @@ class Implication(Operator):
         l_arg = self.arguments[0]
         r_arg = self.arguments[1]
         vertex_list = []
-
+        functors_list = []
+        Formula.counter += 1
         if not self.negation:
-            l_arg.exp = "~" + l_arg.exp
-            l_arg.negation = not l_arg.negation
+            for f in tree.get_end(self):
+                l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
+                l_copy.negate()
+                # l_arg.fork, r_arg.fork = l_copy, r_copy
+                functors_list.extend([l_copy, r_copy])
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(f, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
 
-
-
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(f, r_copy, self.exp)])
-
-            return vertex_list
+            return functors_list, vertex_list
         else:
-            r_arg.exp = "~" + r_arg.exp
-            r_arg.negation = not r_arg.negation
+            for f in tree.get_end(self):
+                l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
+                r_copy.negate()
+                functors_list.extend([l_copy, r_copy])
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(l_copy, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
 
-
-            for f in node.get_end(self.fork):
-                l_copy, r_copy = copy.copy(l_arg),copy.copy(r_arg)
-                l_arg.fork ,r_arg.fork = l_copy, r_copy
-                vertex_list.extend([Vertex(f, l_copy, self.exp), Vertex(l_copy, r_copy, self.exp)])
-
-            return vertex_list
+            return functors_list, vertex_list
 
 
 class Equality(Operator):
@@ -164,7 +167,52 @@ class Equality(Operator):
         super().__init__(EQUALITY_PREFIX, arguments)
 
     def expand(self):
-        pass
+        l_arg = self.arguments[0]
+        r_arg = self.arguments[1]
+        nl_arg = copy.copy(l_arg)
+        nr_arg = copy.copy(r_arg)
+
+        vertex_list = []
+        functors_list = []
+        Formula.counter += 1
+        if not self.negation:
+            for f in tree.get_end(self):
+                l_copy = copy.copy(l_arg)
+                r_copy = copy.copy(r_arg)
+
+                nl_copy = copy.copy(nl_arg)
+                nr_copy = copy.copy(nr_arg)
+
+                nl_copy.negate()
+                nr_copy.negate()
+
+                functors_list.extend([l_copy, nl_copy, r_copy, nr_copy])
+
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(l_copy, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(f, nl_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(nl_copy, nr_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
+            return functors_list, vertex_list
+        else:
+            for f in tree.get_end(self):
+                l_copy = copy.copy(l_arg)
+                r_copy = copy.copy(r_arg)
+
+                nl_copy = copy.copy(nl_arg)
+                nr_copy = copy.copy(nr_arg)
+
+                nl_copy.negate()
+                nr_copy.negate()
+
+                functors_list.extend([l_copy, nl_copy, nr_copy, r_copy])
+
+                vertex_list.extend([Vertex(f, l_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(l_copy, nr_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(f, nl_copy, self.exp, f"{type(self).__name__} ({Formula.counter})"),
+                                    Vertex(nl_copy, r_copy, self.exp, f"{type(self).__name__} ({Formula.counter})")])
+
+            return functors_list, vertex_list
+
 
 class Negation(Operator):
     def __init__(self, arguments):
@@ -176,75 +224,74 @@ class Negation(Operator):
         else:
             prefixed_argument = self.arguments[0].to_prefix_notation()
 
-        self.exp = f"{self.prefix}{prefixed_argument}"
+        self.exp = f'{self.prefix}{prefixed_argument}'
         return self.exp
 
     def expand(self, beg, value=False):
         pass
 
 
-
 tokens = [
-    "LPAREN",
-    "RPAREN",
-    "VARIABLE",
-    "CONJUNCTION",
-    "EQUALITY",
-    "NEGATION",
-    "DISJUNCTION",
-    "IMPLICATION",
+    'LPAREN',
+    'RPAREN',
+    'VARIABLE',
+    'CONJUNCTION',
+    'EQUALITY',
+    'NEGATION',
+    'DISJUNCTION',
+    'IMPLICATION',
 ]
 
-t_ignore = " \t\r\n\f\v"
+t_ignore = ' \t\r\n\f\v'
 
-literals = ["(", ")"]
+literals = ['(', ')']
 
 
 def t_LPAREN(t):
-    r"\("
-    t.type = "LPAREN"
+    r'\('
+    t.type = 'LPAREN'
     return t
 
 
 def t_RPAREN(t):
-    r"\)"
-    t.type = "RPAREN"
+    r'\)'
+    t.type = 'RPAREN'
     return t
 
 
 def t_VARIABLE(t):
-    r"[p-z]([1-9][0-9]*)?"
-    t.type = "VARIABLE"
+    r'[p-z]([1-9][0-9]*)?'
+    t.type = 'VARIABLE'
     return t
 
 
 def t_CONJUNCTION(t):
-    r"and"
-    t.type = "CONJUNCTION"
+    r'and'
+    t.type = 'CONJUNCTION'
     return t
 
 
 def t_IMPLICATION(t):
-    r"=>"
-    t.type = "IMPLICATION"
+    r'=>'
+    t.type = 'IMPLICATION'
     return t
 
 
 def t_EQUALITY(t):
-    r"<=>"
-    t.type = "EQUALITY"
+    r'<=>'
+    t.type = 'EQUALITY'
     return t
 
 
 def t_NEGATION(t):
-    r"~"
-    t.type = "NEGATION"
+    r'~'
+    t.type = 'NEGATION'
     return t
 
 
 def t_DISJUNCTION(t):
-    r"or"
-    t.type = "DISJUNCTION"
+    r'or'
+    t.type = 'DISJUNCTION'
     return t
 
 
@@ -254,7 +301,7 @@ def t_error(t):
 
 
 def p_formula(p):
-    """
+    '''
     formula : atom
     formula : conjunction
     formula : equality
@@ -262,87 +309,79 @@ def p_formula(p):
     formula : negation_with_parens
     formula : disjunction
     formula : implication
-    """
+    '''
     p[0] = p[1]
 
 
 def p_atom(p):
-    """
+    '''
     atom : VARIABLE
-    """
+    '''
     p[0] = Variable(letter=p[1])
 
 
 def p_conjunction(p):
-    """
+    '''
     conjunction : LPAREN formula CONJUNCTION formula RPAREN
-    """
+    '''
     p[0] = Conjunction(arguments=[p[2], p[4]])
     p[2].is_self_standing = False
     p[4].is_self_standing = False
 
 
 def p_equality(p):
-    """
+    '''
     equality : LPAREN formula EQUALITY formula RPAREN
-    """
+    '''
     p[0] = Equality(arguments=[p[2], p[4]])
     p[2].is_self_standing = False
     p[4].is_self_standing = False
 
 
 def p_negation(p):
-    """
+    '''
     negation : NEGATION formula
-    """
+    '''
     p[0] = Negation(arguments=[p[2]])
     p[2].is_self_standing = False
 
 
 def p_negation_with_parens(p):
-    """
+    '''
     negation_with_parens : LPAREN NEGATION formula RPAREN
-    """
+    '''
     p[0] = Negation(arguments=[p[3]])
     p[3].is_self_standing = False
 
 
 def p_implication(p):
-    """
+    '''
     implication : LPAREN formula IMPLICATION formula RPAREN
-    """
+    '''
     p[0] = Implication(arguments=[p[2], p[4]])
     p[2].is_self_standing = False
     p[4].is_self_standing = False
 
 
 def p_disjunction(p):
-    """
+    '''
     disjunction : LPAREN formula DISJUNCTION formula RPAREN
-    """
+    '''
     p[0] = Disjunction(arguments=[p[2], p[4]])
     p[2].is_self_standing = False
     p[4].is_self_standing = False
 
 
 def p_error(p):
-    print("Syntax error in input!")
+    print('Syntax error in input!')
 
 
 def __is_error(obj) -> bool:
-    return isinstance(obj, yacc.YaccSymbol) and obj.type == "error"
-
-
-def parse_pl_formula_infix_notation(text: str) -> Formula:
-    lex.lex(reflags=re.UNICODE)
-    yacc.yacc(write_tables=False)
-    formula = yacc.parse(text)
-    formula.to_prefix_notation()
-    return formula
+    return isinstance(obj, yacc.YaccSymbol) and obj.type == 'error'
 
 
 def hierarchy_pos(G, root=None, width=1.0, vert_gap=0.2, vert_loc=0, xcenter=0.5):
-    """
+    '''
     From Joel's answer at https://stackoverflow.com/a/29597209/2966723.
     Licensed under Creative Commons Attribution-Share Alike
 
@@ -366,9 +405,9 @@ def hierarchy_pos(G, root=None, width=1.0, vert_gap=0.2, vert_loc=0, xcenter=0.5
     vert_loc: vertical location of root
 
     xcenter: horizontal location of root
-    """
+    '''
     if not nx.is_tree(G):
-        raise TypeError("cannot use hierarchy_pos on a graph that is not a tree")
+        raise TypeError('cannot use hierarchy_pos on a graph that is not a tree')
 
     if root is None:
         if isinstance(G, nx.DiGraph):
@@ -381,13 +420,13 @@ def hierarchy_pos(G, root=None, width=1.0, vert_gap=0.2, vert_loc=0, xcenter=0.5
     def _hierarchy_pos(
             G, root, width=1.0, vert_gap=0.2, vert_loc=0, xcenter=0.5, pos=None, parent=None
     ):
-        """
+        '''
         see hierarchy_pos docstring for most arguments
 
         pos: a dict saying where all nodes go if they have been assigned
         parent: parent of this branch. - only affects it if non-directed
 
-        """
+        '''
 
         if pos is None:
             pos = {root: (xcenter, vert_loc)}
@@ -416,46 +455,57 @@ def hierarchy_pos(G, root=None, width=1.0, vert_gap=0.2, vert_loc=0, xcenter=0.5
     return _hierarchy_pos(G, root, width, vert_gap, vert_loc, xcenter)
 
 
-# NKACE
+
+class Vertex:
+    def __init__(self, beg, end, exp, desc):
+        self.exp = exp
+        self.beg = beg
+        self.end = end
+        self.desc: str = desc
 
 
-class Node:
-    def __init__(self, root):
-        self.root = root
-        self.connections = []
+class Tree:
+    def __init__(self):
+        self.edges = []
         self.branch = None
-        self.stack = None
-        self.fork = None
         self.graph = nx.Graph()
         self.labels = {}
+        self.edge_labels = {}
+        self.color_map = []
         self.order = {
-            "Negation": 0,
-            "Variable": 1,
-            "Conjunction": 2,
-            "Disjunction": 3,
-            "Implication": 4,
-            "Equality": 5,
+            'Negation': 0,
+            'Variable': 1,
+            'Conjunction': 2,
+            'Disjunction': 3,
+            'Implication': 4,
+            'Equality': 5,
         }
 
     def sort(self, arguments):
         return sorted(arguments, key=lambda x: self.order[type(x).__name__])
 
-    def create_stack(self):
+    def grow(self):
+        """Rekursywnie
+        """
         current_branch = self.branch
         self.branch = []
-        for arg in self.sort(current_branch):
-            if not isinstance(arg, Variable):
-                self.branch.extend(
-                    self.sort([o for o in arg.arguments if not isinstance(o, Variable)])
-                )
-                self.stack.extend(
-                    self.sort([o for o in arg.arguments if not isinstance(o, Variable)])
-                )
-        #
-        if self.branch:
-            self.create_stack()
+        for arg in current_branch:
+            functors, connections = arg.expand()
+            self.edges.extend(connections)
+            self.branch.extend([o for o in functors if not isinstance(o, Variable)])
 
-    def clear(self, formula):
+        if self.branch:
+            self.grow()
+
+    def clear(self, formula: Formula):
+        """
+        Oczysc obiekt z pojedynczych oraz wielokrotynch negacji.
+
+        Parameters
+        ----------
+        formula: object
+            Ztokenizowane wyrazenie krz.
+        """
         for i, arg in enumerate(formula):
             while isinstance(formula[i], Negation):
                 temp = formula[i].arguments[0]
@@ -470,70 +520,123 @@ class Node:
         self.stack = formula
         self.fork = copy.copy(formula)
 
-    def grow(self):
-        for i, arg in enumerate(self.stack):
-            connections = self.stack[i].expand()
-            self.connections.extend(connections)
+    def find_leaf_nodes(self, edges: list, start_node) -> list:
+        """
+        Znajdz zakonczenia wychodzace z danego wezla.
 
-    def find_leaf_nodes(self,graph, start_node):
+        Parameters
+        ----------
+        edges : list
+            Lista polaczen.
+        start_node : object
+            Wezel poczatkowy.
+
+        Returns
+        -------
+        leaf_nodes: list
+            Lista znalezionych wezlow.
+        """
+
         leaf_nodes = []
-        successors = [x.end for x in graph if x.beg == start_node]
-        print(successors)
+        successors = [edge.end for edge in edges if edge.beg == start_node]
         if len(successors) == 0:
             leaf_nodes.append(start_node)
 
         else:
             for successor in successors:
-                leaf_nodes.extend(self.find_leaf_nodes(graph, successor))
+                leaf_nodes.extend(self.find_leaf_nodes(edges, successor))
         return leaf_nodes
 
-    def get_end(self,fork):
+    def get_end(self, node) -> list:
+        """
 
-        print("Do znalezienia: ",fork.exp)
-        print("Polaczenia",self.connections)
-        ends = self.find_leaf_nodes(self.connections,fork)
-        print("Zwrocone", ends)
-        return ends
+        """
+        print('Do znalezienia: ', node.exp)
+        found_nodes = self.find_leaf_nodes(self.edges, node)
+        print('Zwrocone liście', [node.exp for node in found_nodes])
+        return found_nodes
 
+    def get_branch(self, end_node: object, set_color: bool) -> set:
+        pairs = []
+        connections_len = len(self.edges) - 1
+        i = connections_len
+        while i >= 0:
+            if self.edges[i].end == end_node:
+                if set_color == True:
+                    self.edges[i].end.color = '#d77c2b'
+                pairs.extend([self.edges[i].end.exp, self.edges[i].beg.exp])
+                end_node = self.edges[i].beg
+                i = connections_len
+            i -= 1
+        if set_color == True:
+            self.edges[i + 1].beg.color = '#d77c2b'
+        return set(pairs)
 
     def display(self):
-        def flatten(lst):
-            """
-            Splaszcza liste o dowolnej głebokosci.
-            """
-            result = []
-            for item in lst:
-                if isinstance(item, list):
-                    result.extend(flatten(item))
-                else:
-                    result.append(item)
-            return result
-        print(self.connections[0].end)
-        connections = [[o.beg, o.end] for o in flatten(self.connections)]
-        self.graph.add_edges_from(connections)
+        self.graph.add_edges_from([[o.beg, o.end] for o in self.edges])
+        #self.edge_labels = [edge.desc for edge in self.edges]
+        self.edge_labels = dict([((edge.beg, edge.end), edge.desc) for edge in self.edges])
         for node in self.graph.nodes():
             self.labels[node] = node.exp
 
-        options = {"edgecolors": "black", "node_size": 1200}
+        self.color_map = [node.color for node in self.graph]
+        options = {'edgecolors': 'black', 'node_size': 1200}
         pos = hierarchy_pos(self.graph, self.stack[0])
-        #pos = nx.spring_layout(self.graph)
-        nx.draw(self.graph, pos=pos, with_labels=True, labels=self.labels, **options)
+        # pos = nx.spring_layout(self.graph)
+
+        nx.draw(self.graph, pos=pos, with_labels=True, node_color=self.color_map, labels=self.labels, **options)
+        nx.draw_networkx_edge_labels(self.graph, pos=pos, edge_labels=self.edge_labels, label_pos=0.5, rotate=False, alpha=0.4,
+                                     font_color='black', font_size=7, font_weight='bold')
         plt.show()
 
 
-class Vertex:
-    def __init__(self, beg, end, exp):
-        self.exp = exp
-        self.beg = beg
-        self.end = end
+def check_contradictions(expressions: list) -> bool:
+    for expression in expressions:
+        if expression[0] == '~':
+            negation = expression[1:]
+            if negation in expressions:
+                return True
+        else:
+            negation = '~' + expression
+            if negation in expressions:
+                return True
+
+    return False
 
 
-# f = parse_pl_formula_infix_notation("((p <=> ~q) and (~p <=> q))")
-f = parse_pl_formula_infix_notation("(~(p or r) or q)")
-# print(check_if_tautology(f))
-node = Node(f)
-node.clear([f])
+def parse_pl_formula_infix_notation(text: str) -> Formula:
+    lex.lex(reflags=re.UNICODE)
+    yacc.yacc(write_tables=False)
+    formula = yacc.parse(text)
+    formula.to_prefix_notation()
+    return formula
 
-node.create_stack()
-node.grow()
-node.display()
+
+# ~((p and (q or ~r)) <=> ((p and q) or (p and ~r)))
+f = parse_pl_formula_infix_notation('~(((p and q) => r) <=> (p => (q => r)))')
+
+tree = Tree()
+
+def check_if_tautology(tree: Tree, formula: Formula) -> bool:
+    tree.clear([f])
+    tree.grow()
+    print('=================')
+    check = []
+    for i, leaf in enumerate(tree.get_end(tree.stack[0])):
+        check.append(check_contradictions(tree.get_branch(leaf, False)))
+
+        if check[i] == True:
+            tree.get_branch(leaf, True)
+        print(f'Branch nr. {i + 1} {check[i]} ')
+
+    if all(check):
+        return True
+    else:
+        return False
+
+if check_if_tautology(tree, f):
+    print('Wyrażenie jest tautologia')
+else:
+    print('Wyrażenie nie jest tautologia')
+
+tree.display()
