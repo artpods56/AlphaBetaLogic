@@ -1,6 +1,7 @@
 import random
 import re
 import copy
+import itertools
 from ply import lex, yacc
 import networkx as nx
 import matplotlib
@@ -11,10 +12,20 @@ matplotlib.use('TkAgg')
 class Formula:
     registry = set()
     counter = 0
+
     def __init__(self, is_self_standing=True):
         self.is_self_standing = is_self_standing
         Formula.registry.add(self)
         self.negation = False
+
+    def get_value(self):
+        pass
+
+    @staticmethod
+    def set_values(variables_dict):
+        for f in Formula.registry:
+            if isinstance(f, Variable):
+                f.set_value(variables_dict[f.letter])
 
     def to_prefix_notation(self):
         pass
@@ -27,12 +38,17 @@ class Variable(Formula):
         self.exp = letter
         self.color = '#2596be'
 
+    def get_value(self):
+        return self.value
+
+    def set_value(self, value):
+        self.value = value
+
     def to_prefix_notation(self):
         return self.letter
 
     def negate(self):
-        """
-        Aplikuje negacje do zmiennej.
+        """Neguje zmienna.
         """
         self.negation = not self.negation
         if self.exp[0] == '~':
@@ -67,8 +83,7 @@ class Operator(Formula):
         return self.exp
 
     def negate(self):
-        """
-        Aplikuje negacje do wyrazenia.
+        """Neguje wyrazenie.
         """
         self.negation = not self.negation
         if self.exp[0] == '~':
@@ -81,6 +96,9 @@ class Conjunction(Operator):
     def __init__(self, arguments):
         super().__init__(CONJUNCTION_PREFIX, arguments)
 
+    def get_value(self):
+        return self.arguments[0].get_value() and self.arguments[1].get_value()
+
     def expand(self):
         l_arg = self.arguments[0]
         r_arg = self.arguments[1]
@@ -92,8 +110,8 @@ class Conjunction(Operator):
             for f in tree.get_end(self):
                 l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
                 functors_list.extend([l_copy, r_copy])
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
 
             return functors_list, vertex_list
         else:
@@ -102,8 +120,8 @@ class Conjunction(Operator):
                 l_copy.negate()
                 r_copy.negate()
                 functors_list.extend([l_copy, r_copy])
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(f, r_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(f, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
 
             return functors_list, vertex_list
 
@@ -112,6 +130,9 @@ class Disjunction(Operator):
     def __init__(self, arguments):
         super().__init__(DISJUNCTION_PREFIX, arguments)
 
+    def get_value(self):
+        return self.arguments[0].get_value() or self.arguments[1].get_value()
+
     def expand(self):
         l_arg = self.arguments[0]
         r_arg = self.arguments[1]
@@ -122,8 +143,8 @@ class Disjunction(Operator):
             for f in tree.get_end(self):
                 l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
                 functors_list.extend([l_copy, r_copy])
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(f, r_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(f, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
             return functors_list, vertex_list
         else:
             for f in tree.get_end(self):
@@ -131,8 +152,8 @@ class Disjunction(Operator):
                 l_copy.negate()
                 r_copy.negate()
                 functors_list.extend([l_copy, r_copy])
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
 
             return functors_list, vertex_list
 
@@ -140,6 +161,12 @@ class Disjunction(Operator):
 class Implication(Operator):
     def __init__(self, arguments):
         super().__init__(IMPLICATION_PREFIX, arguments)
+
+    def get_value(self):
+        if self.arguments[0].get_value() == 0 or self.arguments[1].get_value() == 1:
+            return 1
+        else:
+            return 0
 
     def expand(self):
         l_arg = self.arguments[0]
@@ -153,8 +180,8 @@ class Implication(Operator):
                 l_copy.negate()
                 # l_arg.fork, r_arg.fork = l_copy, r_copy
                 functors_list.extend([l_copy, r_copy])
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(f, r_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(f, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
 
             return functors_list, vertex_list
         else:
@@ -162,8 +189,8 @@ class Implication(Operator):
                 l_copy, r_copy = copy.copy(l_arg), copy.copy(r_arg)
                 r_copy.negate()
                 functors_list.extend([l_copy, r_copy])
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
 
             return functors_list, vertex_list
 
@@ -171,6 +198,9 @@ class Implication(Operator):
 class Equality(Operator):
     def __init__(self, arguments):
         super().__init__(EQUALITY_PREFIX, arguments)
+
+    def get_value(self):
+        return int(self.arguments[0].get_value() == self.arguments[1].get_value())
 
     def expand(self):
         l_arg = self.arguments[0]
@@ -194,10 +224,10 @@ class Equality(Operator):
 
                 functors_list.extend([l_copy, nl_copy, r_copy, nr_copy])
 
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(f, nl_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(nl_copy, nr_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(l_copy, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(f, nl_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(nl_copy, nr_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
             return functors_list, vertex_list
         else:
             for f in tree.get_end(self):
@@ -212,10 +242,10 @@ class Equality(Operator):
 
                 functors_list.extend([l_copy, nl_copy, nr_copy, r_copy])
 
-                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(l_copy, nr_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(f, nl_copy, f"{type(self).__name__} ({Formula.counter})"),
-                                    Vertex(nl_copy, r_copy, f"{type(self).__name__} ({Formula.counter})")])
+                vertex_list.extend([Vertex(f, l_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(l_copy, nr_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(f, nl_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}"),
+                                    Vertex(nl_copy, r_copy, f"{type(self).__name__} ({Formula.counter}) \n {self.exp}")])
 
             return functors_list, vertex_list
 
@@ -223,6 +253,9 @@ class Equality(Operator):
 class Negation(Operator):
     def __init__(self, arguments):
         super().__init__(NEGATION_PREFIX, arguments)
+
+    def get_value(self):
+        return int(not(self.arguments[0].get_value()))
 
     def to_prefix_notation(self):
         if isinstance(self.arguments[0], Variable):
@@ -591,9 +624,9 @@ class Tree:
         """
 
         """
-        print('Do znalezienia: ', node.exp)
+        #print('Do znalezienia: ', node.exp)
         found_nodes = self.find_leaf_nodes(self.edges, node)
-        print('Zwrocone liście', [node.exp for node in found_nodes])
+        #print('Zwrocone liście', [node.exp for node in found_nodes],"\n")
         return found_nodes
 
     def get_branch(self, end_node: object, set_color: bool) -> set:
@@ -602,13 +635,13 @@ class Tree:
         i = connections_len
         while i >= 0:
             if self.edges[i].end == end_node:
-                if set_color == True:
+                if set_color:
                     self.edges[i].end.color = '#d77c2b'
                 pairs.extend([self.edges[i].end.exp, self.edges[i].beg.exp])
                 end_node = self.edges[i].beg
                 i = connections_len
             i -= 1
-        if set_color == True:
+        if set_color:
             self.edges[i + 1].beg.color = '#d77c2b'
         return set(pairs)
 
@@ -619,6 +652,7 @@ class Tree:
             self.labels[node] = node.exp
 
         self.color_map = [node.color for node in self.graph]
+
         options = {'edgecolors': 'black', 'node_size': 1200}
         pos = hierarchy_pos(self.graph, self.root[0])
         #pos = nx.spring_layout(self.graph)
@@ -658,7 +692,7 @@ def check_contradictions(expressions: list) -> bool:
         Zwroc True, jesli znajdziesz wyrazenia sprzeczne.
     """
     for expression in expressions:
-        if expression[0] == '~':
+        if expression.startswith("~"):
             negation = expression[1:]
             if negation in expressions:
                 print(f"Wyrażenia sprzeczne: {expression} oraz {negation}")
@@ -668,7 +702,7 @@ def check_contradictions(expressions: list) -> bool:
             if negation in expressions:
                 print(f"Wyrażenia sprzeczne: {expression} oraz {negation}")
                 return True
-
+    print("Brak wyrazen sprzecznych.")
     return False
 
 
@@ -686,33 +720,50 @@ def check_if_tautology(tree: Tree, formula: str) -> bool:
     Parameters
     ----------
     tree: Tree
-        obiekt przechowujacy
-
+        Obiekt przechowujacy informacje o wezlach i polaczeniach.
+    formula: str
+        Wyrazenie krz w formie napisu.
     Returns
     -------
     bool
-        zwroc True jesli wszystkie galezie zawieraja sprzecznosc.
+        Zwroc True jesli wszystkie galezie zawieraja sprzecznosc.
     """
+
     parsed_formula = parse_pl_formula_infix_notation(formula)
     tree.clear([parsed_formula])
     tree.grow()
-    print('_____________________________________')
     check = []
     for i, leaf in enumerate(tree.get_end(tree.root[0])):
         check.append(check_contradictions(tree.get_branch(leaf, False)))
-        if check[i] == True:
+        if check[i]:
             tree.get_branch(leaf, True)
-        print(f'Branch nr. {i + 1} {check[i]} ')
+        print(f'Galaz numer. {i + 1} {check[i]} ')
 
     if all(check):
         return True
     else:
         return False
 
+def check_with_table(formula: str) -> bool:
+    print("\nMetoda tablic: ")
+    f = parse_pl_formula_infix_notation(formula[1:])
+    variables = sorted(set({o.letter for o in f.registry if isinstance(o, Variable)}))
+    all_01_combinations = list(itertools.product([0, 1], repeat=len(variables)))
+    results = list()
+    for combination in all_01_combinations:
+        variables_dict = {k: v for k, v in zip(variables, combination)}
+        Formula().set_values(variables_dict)
+        result = f.get_value()
+        print(f'{variables_dict} => {result}')
+        results.append(result)
+
+    return all(results)
+
+
 tautologies = [
                "~(p or ~p)", #prawo wylaczonego srodka
                "~(p <=> ~~p)", #prawo podwojnej negacji
-               "~((p and (q or ~r)) => ((p and q) or (p and ~r)))",
+               "~((p and (q or ~r)) <=> ((p and q) or (p and ~r)))",
                "~(~(p and q) <=> (~p or ~q))", #I prawo de Morgana
                "~(~(p or q) <=> (~p and ~q))", #II prawo de Morgana
                "~((p and (p => q)) => q)", #prawo odrywania
@@ -724,9 +775,14 @@ tautologies = [
                ]
 
 for taut in tautologies:
+    print("________________________________")
+    print(f"Sprawdzane wyrażenie: {taut[1:]}")
     tree = Tree()
     Formula.counter = 0
-    if check_if_tautology(tree,taut):
+    checked_tree = check_if_tautology(tree,taut)
+    checked_tables = check_with_table(taut)
+
+    if checked_tables and checked_tree:
         print(f"Wyrażenie: {taut} jest tautologią.\n")
     else:
         print(f"Wyrażenie: {taut} nie jest tautologią.\n")
