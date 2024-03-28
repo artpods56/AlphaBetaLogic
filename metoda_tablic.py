@@ -787,3 +787,4 @@ for taut in tautologies:
     else:
         print(f"Wyrażenie: {taut} nie jest tautologią.\n")
     tree.display()
+#%%
