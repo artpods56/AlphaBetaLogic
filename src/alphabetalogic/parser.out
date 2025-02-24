@@ -1,0 +1,524 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> formula
+Rule 1     formula -> atom
+Rule 2     formula -> conjunction
+Rule 3     formula -> equality
+Rule 4     formula -> negation
+Rule 5     formula -> negation_with_parens
+Rule 6     formula -> disjunction
+Rule 7     formula -> implication
+Rule 8     atom -> VARIABLE
+Rule 9     conjunction -> LPAREN formula CONJUNCTION formula RPAREN
+Rule 10    equality -> LPAREN formula EQUALITY formula RPAREN
+Rule 11    negation -> NEGATION formula
+Rule 12    negation_with_parens -> LPAREN NEGATION formula RPAREN
+Rule 13    implication -> LPAREN formula IMPLICATION formula RPAREN
+Rule 14    disjunction -> LPAREN formula DISJUNCTION formula RPAREN
+
+Terminals, with rules where they appear
+
+CONJUNCTION          : 9
+DISJUNCTION          : 14
+EQUALITY             : 10
+IMPLICATION          : 13
+LPAREN               : 9 10 12 13 14
+NEGATION             : 11 12
+RPAREN               : 9 10 12 13 14
+VARIABLE             : 8
+error                : 
+
+Nonterminals, with rules where they appear
+
+atom                 : 1
+conjunction          : 2
+disjunction          : 6
+equality             : 3
+formula              : 9 9 10 10 11 12 13 13 14 14 0
+implication          : 7
+negation             : 4
+negation_with_parens : 5
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . formula
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+    NEGATION        shift and go to state 11
+
+    formula                        shift and go to state 1
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 1
+
+    (0) S' -> formula .
+
+
+
+state 2
+
+    (1) formula -> atom .
+
+    $end            reduce using rule 1 (formula -> atom .)
+    CONJUNCTION     reduce using rule 1 (formula -> atom .)
+    EQUALITY        reduce using rule 1 (formula -> atom .)
+    DISJUNCTION     reduce using rule 1 (formula -> atom .)
+    IMPLICATION     reduce using rule 1 (formula -> atom .)
+    RPAREN          reduce using rule 1 (formula -> atom .)
+
+
+state 3
+
+    (2) formula -> conjunction .
+
+    $end            reduce using rule 2 (formula -> conjunction .)
+    CONJUNCTION     reduce using rule 2 (formula -> conjunction .)
+    EQUALITY        reduce using rule 2 (formula -> conjunction .)
+    DISJUNCTION     reduce using rule 2 (formula -> conjunction .)
+    IMPLICATION     reduce using rule 2 (formula -> conjunction .)
+    RPAREN          reduce using rule 2 (formula -> conjunction .)
+
+
+state 4
+
+    (3) formula -> equality .
+
+    $end            reduce using rule 3 (formula -> equality .)
+    CONJUNCTION     reduce using rule 3 (formula -> equality .)
+    EQUALITY        reduce using rule 3 (formula -> equality .)
+    DISJUNCTION     reduce using rule 3 (formula -> equality .)
+    IMPLICATION     reduce using rule 3 (formula -> equality .)
+    RPAREN          reduce using rule 3 (formula -> equality .)
+
+
+state 5
+
+    (4) formula -> negation .
+
+    $end            reduce using rule 4 (formula -> negation .)
+    CONJUNCTION     reduce using rule 4 (formula -> negation .)
+    EQUALITY        reduce using rule 4 (formula -> negation .)
+    DISJUNCTION     reduce using rule 4 (formula -> negation .)
+    IMPLICATION     reduce using rule 4 (formula -> negation .)
+    RPAREN          reduce using rule 4 (formula -> negation .)
+
+
+state 6
+
+    (5) formula -> negation_with_parens .
+
+    $end            reduce using rule 5 (formula -> negation_with_parens .)
+    CONJUNCTION     reduce using rule 5 (formula -> negation_with_parens .)
+    EQUALITY        reduce using rule 5 (formula -> negation_with_parens .)
+    DISJUNCTION     reduce using rule 5 (formula -> negation_with_parens .)
+    IMPLICATION     reduce using rule 5 (formula -> negation_with_parens .)
+    RPAREN          reduce using rule 5 (formula -> negation_with_parens .)
+
+
+state 7
+
+    (6) formula -> disjunction .
+
+    $end            reduce using rule 6 (formula -> disjunction .)
+    CONJUNCTION     reduce using rule 6 (formula -> disjunction .)
+    EQUALITY        reduce using rule 6 (formula -> disjunction .)
+    DISJUNCTION     reduce using rule 6 (formula -> disjunction .)
+    IMPLICATION     reduce using rule 6 (formula -> disjunction .)
+    RPAREN          reduce using rule 6 (formula -> disjunction .)
+
+
+state 8
+
+    (7) formula -> implication .
+
+    $end            reduce using rule 7 (formula -> implication .)
+    CONJUNCTION     reduce using rule 7 (formula -> implication .)
+    EQUALITY        reduce using rule 7 (formula -> implication .)
+    DISJUNCTION     reduce using rule 7 (formula -> implication .)
+    IMPLICATION     reduce using rule 7 (formula -> implication .)
+    RPAREN          reduce using rule 7 (formula -> implication .)
+
+
+state 9
+
+    (8) atom -> VARIABLE .
+
+    $end            reduce using rule 8 (atom -> VARIABLE .)
+    CONJUNCTION     reduce using rule 8 (atom -> VARIABLE .)
+    EQUALITY        reduce using rule 8 (atom -> VARIABLE .)
+    DISJUNCTION     reduce using rule 8 (atom -> VARIABLE .)
+    IMPLICATION     reduce using rule 8 (atom -> VARIABLE .)
+    RPAREN          reduce using rule 8 (atom -> VARIABLE .)
+
+
+state 10
+
+    (9) conjunction -> LPAREN . formula CONJUNCTION formula RPAREN
+    (10) equality -> LPAREN . formula EQUALITY formula RPAREN
+    (12) negation_with_parens -> LPAREN . NEGATION formula RPAREN
+    (14) disjunction -> LPAREN . formula DISJUNCTION formula RPAREN
+    (13) implication -> LPAREN . formula IMPLICATION formula RPAREN
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    NEGATION        shift and go to state 13
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+
+    formula                        shift and go to state 12
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 11
+
+    (11) negation -> NEGATION . formula
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+    NEGATION        shift and go to state 11
+
+    formula                        shift and go to state 14
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 12
+
+    (9) conjunction -> LPAREN formula . CONJUNCTION formula RPAREN
+    (10) equality -> LPAREN formula . EQUALITY formula RPAREN
+    (14) disjunction -> LPAREN formula . DISJUNCTION formula RPAREN
+    (13) implication -> LPAREN formula . IMPLICATION formula RPAREN
+
+    CONJUNCTION     shift and go to state 15
+    EQUALITY        shift and go to state 16
+    DISJUNCTION     shift and go to state 17
+    IMPLICATION     shift and go to state 18
+
+
+state 13
+
+    (12) negation_with_parens -> LPAREN NEGATION . formula RPAREN
+    (11) negation -> NEGATION . formula
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+    NEGATION        shift and go to state 11
+
+    formula                        shift and go to state 19
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 14
+
+    (11) negation -> NEGATION formula .
+
+    $end            reduce using rule 11 (negation -> NEGATION formula .)
+    RPAREN          reduce using rule 11 (negation -> NEGATION formula .)
+    CONJUNCTION     reduce using rule 11 (negation -> NEGATION formula .)
+    EQUALITY        reduce using rule 11 (negation -> NEGATION formula .)
+    DISJUNCTION     reduce using rule 11 (negation -> NEGATION formula .)
+    IMPLICATION     reduce using rule 11 (negation -> NEGATION formula .)
+
+
+state 15
+
+    (9) conjunction -> LPAREN formula CONJUNCTION . formula RPAREN
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+    NEGATION        shift and go to state 11
+
+    formula                        shift and go to state 20
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 16
+
+    (10) equality -> LPAREN formula EQUALITY . formula RPAREN
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+    NEGATION        shift and go to state 11
+
+    formula                        shift and go to state 21
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 17
+
+    (14) disjunction -> LPAREN formula DISJUNCTION . formula RPAREN
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+    NEGATION        shift and go to state 11
+
+    formula                        shift and go to state 22
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 18
+
+    (13) implication -> LPAREN formula IMPLICATION . formula RPAREN
+    (1) formula -> . atom
+    (2) formula -> . conjunction
+    (3) formula -> . equality
+    (4) formula -> . negation
+    (5) formula -> . negation_with_parens
+    (6) formula -> . disjunction
+    (7) formula -> . implication
+    (8) atom -> . VARIABLE
+    (9) conjunction -> . LPAREN formula CONJUNCTION formula RPAREN
+    (10) equality -> . LPAREN formula EQUALITY formula RPAREN
+    (11) negation -> . NEGATION formula
+    (12) negation_with_parens -> . LPAREN NEGATION formula RPAREN
+    (14) disjunction -> . LPAREN formula DISJUNCTION formula RPAREN
+    (13) implication -> . LPAREN formula IMPLICATION formula RPAREN
+
+    VARIABLE        shift and go to state 9
+    LPAREN          shift and go to state 10
+    NEGATION        shift and go to state 11
+
+    formula                        shift and go to state 23
+    atom                           shift and go to state 2
+    conjunction                    shift and go to state 3
+    equality                       shift and go to state 4
+    negation                       shift and go to state 5
+    negation_with_parens           shift and go to state 6
+    disjunction                    shift and go to state 7
+    implication                    shift and go to state 8
+
+state 19
+
+    (12) negation_with_parens -> LPAREN NEGATION formula . RPAREN
+    (11) negation -> NEGATION formula .
+
+    RPAREN          shift and go to state 24
+    CONJUNCTION     reduce using rule 11 (negation -> NEGATION formula .)
+    EQUALITY        reduce using rule 11 (negation -> NEGATION formula .)
+    DISJUNCTION     reduce using rule 11 (negation -> NEGATION formula .)
+    IMPLICATION     reduce using rule 11 (negation -> NEGATION formula .)
+
+
+state 20
+
+    (9) conjunction -> LPAREN formula CONJUNCTION formula . RPAREN
+
+    RPAREN          shift and go to state 25
+
+
+state 21
+
+    (10) equality -> LPAREN formula EQUALITY formula . RPAREN
+
+    RPAREN          shift and go to state 26
+
+
+state 22
+
+    (14) disjunction -> LPAREN formula DISJUNCTION formula . RPAREN
+
+    RPAREN          shift and go to state 27
+
+
+state 23
+
+    (13) implication -> LPAREN formula IMPLICATION formula . RPAREN
+
+    RPAREN          shift and go to state 28
+
+
+state 24
+
+    (12) negation_with_parens -> LPAREN NEGATION formula RPAREN .
+
+    $end            reduce using rule 12 (negation_with_parens -> LPAREN NEGATION formula RPAREN .)
+    CONJUNCTION     reduce using rule 12 (negation_with_parens -> LPAREN NEGATION formula RPAREN .)
+    EQUALITY        reduce using rule 12 (negation_with_parens -> LPAREN NEGATION formula RPAREN .)
+    DISJUNCTION     reduce using rule 12 (negation_with_parens -> LPAREN NEGATION formula RPAREN .)
+    IMPLICATION     reduce using rule 12 (negation_with_parens -> LPAREN NEGATION formula RPAREN .)
+    RPAREN          reduce using rule 12 (negation_with_parens -> LPAREN NEGATION formula RPAREN .)
+
+
+state 25
+
+    (9) conjunction -> LPAREN formula CONJUNCTION formula RPAREN .
+
+    $end            reduce using rule 9 (conjunction -> LPAREN formula CONJUNCTION formula RPAREN .)
+    CONJUNCTION     reduce using rule 9 (conjunction -> LPAREN formula CONJUNCTION formula RPAREN .)
+    EQUALITY        reduce using rule 9 (conjunction -> LPAREN formula CONJUNCTION formula RPAREN .)
+    DISJUNCTION     reduce using rule 9 (conjunction -> LPAREN formula CONJUNCTION formula RPAREN .)
+    IMPLICATION     reduce using rule 9 (conjunction -> LPAREN formula CONJUNCTION formula RPAREN .)
+    RPAREN          reduce using rule 9 (conjunction -> LPAREN formula CONJUNCTION formula RPAREN .)
+
+
+state 26
+
+    (10) equality -> LPAREN formula EQUALITY formula RPAREN .
+
+    $end            reduce using rule 10 (equality -> LPAREN formula EQUALITY formula RPAREN .)
+    CONJUNCTION     reduce using rule 10 (equality -> LPAREN formula EQUALITY formula RPAREN .)
+    EQUALITY        reduce using rule 10 (equality -> LPAREN formula EQUALITY formula RPAREN .)
+    DISJUNCTION     reduce using rule 10 (equality -> LPAREN formula EQUALITY formula RPAREN .)
+    IMPLICATION     reduce using rule 10 (equality -> LPAREN formula EQUALITY formula RPAREN .)
+    RPAREN          reduce using rule 10 (equality -> LPAREN formula EQUALITY formula RPAREN .)
+
+
+state 27
+
+    (14) disjunction -> LPAREN formula DISJUNCTION formula RPAREN .
+
+    $end            reduce using rule 14 (disjunction -> LPAREN formula DISJUNCTION formula RPAREN .)
+    CONJUNCTION     reduce using rule 14 (disjunction -> LPAREN formula DISJUNCTION formula RPAREN .)
+    EQUALITY        reduce using rule 14 (disjunction -> LPAREN formula DISJUNCTION formula RPAREN .)
+    DISJUNCTION     reduce using rule 14 (disjunction -> LPAREN formula DISJUNCTION formula RPAREN .)
+    IMPLICATION     reduce using rule 14 (disjunction -> LPAREN formula DISJUNCTION formula RPAREN .)
+    RPAREN          reduce using rule 14 (disjunction -> LPAREN formula DISJUNCTION formula RPAREN .)
+
+
+state 28
+
+    (13) implication -> LPAREN formula IMPLICATION formula RPAREN .
+
+    $end            reduce using rule 13 (implication -> LPAREN formula IMPLICATION formula RPAREN .)
+    CONJUNCTION     reduce using rule 13 (implication -> LPAREN formula IMPLICATION formula RPAREN .)
+    EQUALITY        reduce using rule 13 (implication -> LPAREN formula IMPLICATION formula RPAREN .)
+    DISJUNCTION     reduce using rule 13 (implication -> LPAREN formula IMPLICATION formula RPAREN .)
+    IMPLICATION     reduce using rule 13 (implication -> LPAREN formula IMPLICATION formula RPAREN .)
+    RPAREN          reduce using rule 13 (implication -> LPAREN formula IMPLICATION formula RPAREN .)
+

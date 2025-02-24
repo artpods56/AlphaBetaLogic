@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alphabetalogic"
+version = "0.1.0"
+description = "A tool for parsing and analyzing logical expressions"
+authors = [{name = "Author"}]
+requires-python = ">=3.7"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["alphabetalogic*"]
+namespaces = false
