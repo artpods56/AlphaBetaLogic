@@ -1,3 +1,4 @@
+import itertools
 import re
 
 import matplotlib.pyplot as plt
@@ -5,8 +6,8 @@ import networkx as nx
 from ply import lex, yacc
 
 from .formula import Formula, Variable
-from .utils import hierarchy_pos
-from .utils import Vertex
+from .tableaux_expander import TableauxExpander
+from .utils import Vertex, hierarchy_pos
 
 
 class Tree:
@@ -49,45 +50,25 @@ class Tree:
             "Implication": 4,
             "Equality": 5,
         }
+        self.expander = TableauxExpander(self)  # Create an expander instance
 
     def sort(self, arguments):
         return sorted(arguments, key=lambda x: self.order[type(x).__name__])
 
     def grow(self):
         """
-        Rekursywnie rozloz wyrazenie wedlug regul metody tablic analitycznych.
+        Recursively decompose the expression according to the rules of the analytical tableaux method.
         """
         current_stack = self.stack
         self.stack = []
         for argument in current_stack:
-            functors, connections = argument.expand()
+            functors, connections = self.expander.expand(argument)  # Use the expander
             self.edges.extend(connections)
             self.stack.extend([o for o in functors if not isinstance(o, Variable)])
 
         if self.stack:
             self.grow()
 
-    def clear(self, formula: Formula):
-        """
-        Oczysc strukture z pojedynczych oraz wielokrotynch negacji.
-
-        Parameters
-        ----------
-        formula: object
-            Wyrazenie krz w formie obiektu.
-        """
-        for i, arg in enumerate(formula):
-            while isinstance(formula[i], Negation):
-                temp = formula[i].arguments[0]
-                del formula[i]
-                temp.negation = not temp.negation
-                temp.exp = arg.exp
-                formula.insert(i, temp)
-            if not isinstance(arg, Variable):
-                self.clear(arg.arguments)
-
-        self.stack = formula
-        self.root = formula
 
     def find_leaf_nodes(self, edges: list, start_node) -> list:
         """
@@ -198,7 +179,6 @@ class Vertex:
         self.desc: str = desc
 
 
-
 def check_contradictions(expressions: list) -> bool:
     """
     Sprawdz, czy galaz zawiera wyrazenia sprzeczne.
@@ -298,13 +278,11 @@ tautologies = [
     "~(((p => q) and (q => r)) => (p => r))",  # prawo przechodnosci implikacji
     "~((q and p) => (q or p))",
 ]
-#for taut in tautologies:
+# for taut in tautologies:
 
 
-
-
-#print(check_if_tautology("~(p or ~p)"))
-#while True:
+# print(check_if_tautology("~(p or ~p)"))
+# while True:
 #    taut = input("insert tautology")
 #    print("________________________________")
 #    print(f"Sprawdzane wyrażenie: {taut}")
@@ -318,4 +296,4 @@ tautologies = [
 #        print(f"Wyrażenie: {taut} jest tautologią.\n")
 #    else:
 #        print(f"Wyrażenie: {taut} nie jest tautologią.\n")
-    #tree.display()
+# tree.display()
