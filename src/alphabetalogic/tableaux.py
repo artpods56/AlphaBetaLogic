@@ -50,7 +50,6 @@ class Tree:
             "Implication": 4,
             "Equality": 5,
         }
-        self.expander = TableauxExpander(self)  # Create an expander instance
 
     def sort(self, arguments):
         return sorted(arguments, key=lambda x: self.order[type(x).__name__])
@@ -105,58 +104,65 @@ class Tree:
         return found_nodes
 
     def get_branch(self, end_node: object, set_color: bool) -> set:
+        """
+        Get all expressions in a branch from the root to the given leaf node.
+        
+        Parameters
+        ----------
+        end_node : object
+            The leaf node at the end of the branch.
+        set_color : bool
+            Whether to color the branch for visualization.
+            
+        Returns
+        -------
+        set
+            A set of all expressions in the branch.
+        """
         pairs = []
+        current_node = end_node
+        
+        # Add the leaf node expression
+        if hasattr(end_node, 'exp'):
+            pairs.append(end_node.exp)
+            
+        # Handle the special case when there are no edges
+        if not self.edges:
+            if self.root and hasattr(self.root[0], 'exp'):
+                pairs.append(self.root[0].exp)
+            return set(pairs)
+            
+        # Traverse the branch from leaf to root
         connections_len = len(self.edges) - 1
         i = connections_len
         while i >= 0:
-            if self.edges[i].end == end_node:
+            if self.edges[i].end == current_node:
+                # Color the node if needed
                 if set_color:
                     self.edges[i].end.color = "#d77c2b"
-                pairs.extend([self.edges[i].end.exp, self.edges[i].beg.exp])
-                end_node = self.edges[i].beg
-                i = connections_len
-            i -= 1
-        if set_color:
-            self.edges[i + 1].beg.color = "#d77c2b"
+                
+                # Add expressions to the branch
+                if hasattr(self.edges[i].end, 'exp'):
+                    pairs.append(self.edges[i].end.exp)
+                if hasattr(self.edges[i].beg, 'exp'):
+                    pairs.append(self.edges[i].beg.exp)
+                
+                # Move up to the parent node
+                current_node = self.edges[i].beg
+                i = connections_len  # Restart the search from the top
+            else:
+                i -= 1
+                
+        # Color the root if needed
+        if set_color and current_node:
+            current_node.color = "#d77c2b"
+            
+        # Add root node if we didn't encounter it in the traversal
+        if self.root and self.root[0] not in pairs and hasattr(self.root[0], 'exp'):
+            pairs.append(self.root[0].exp)
+            
         return set(pairs)
 
-    def display(self):
-        self.graph.add_edges_from([[o.beg, o.end] for o in self.edges])
-        self.edge_labels = dict(
-            [((edge.beg, edge.end), edge.desc) for edge in self.edges]
-        )
-        for node in self.graph.nodes():
-            self.labels[node] = node.exp
-
-        self.color_map = [node.color for node in self.graph]
-
-        options = {"edgecolors": "black", "node_size": 1200}
-        pos = hierarchy_pos(self.graph, self.root[0])
-        # pos = nx.spring_layout(self.graph)
-
-        nx.draw(
-            self.graph,
-            pos=pos,
-            with_labels=True,
-            node_color=self.color_map,
-            labels=self.labels,
-            **options,
-        )
-
-        nx.draw_networkx_edge_labels(
-            self.graph,
-            pos=pos,
-            edge_labels=self.edge_labels,
-            label_pos=0.5,
-            rotate=False,
-            alpha=0.4,
-            font_color="black",
-            font_size=7,
-            font_weight="bold",
-        )
-
-        # plt.savefig("graph.png", format="PNG")
-        plt.show()
 
 
 class Vertex:
@@ -179,31 +185,33 @@ class Vertex:
         self.desc: str = desc
 
 
-def check_contradictions(expressions: list) -> bool:
+def check_contradictions(expressions: set) -> bool:
     """
-    Sprawdz, czy galaz zawiera wyrazenia sprzeczne.
+    Check if a branch contains contradictory expressions.
+    
     Parameters
     ----------
-    expressions: list
-        Lista wyrazen ktore zawiera galaz.
+    expressions: set
+        Set of expressions in the branch.
 
     Returns
     -------
     bool
-        Zwroc True, jesli znajdziesz wyrazenia sprzeczne.
+        Returns True if contradictory expressions are found.
     """
     for expression in expressions:
-        if expression.startswith("~"):
-            negation = expression[1:]
-            if negation in expressions:
-                print(f"Wyrażenia sprzeczne: {expression} oraz {negation}")
-                return True
-        else:
-            negation = "~" + expression
-            if negation in expressions:
-                print(f"Wyrażenia sprzeczne: {expression} oraz {negation}")
-                return True
-    print("Brak wyrazen sprzecznych.")
+        if isinstance(expression, str):
+            if expression.startswith("~"):
+                negation = expression[1:]
+                if negation in expressions:
+                    print(f"Contradictory expressions: {expression} and {negation}")
+                    return True
+            else:
+                negation = "~" + expression
+                if negation in expressions:
+                    print(f"Contradictory expressions: {expression} and {negation}")
+                    return True
+    print("No contradictory expressions found.")
     return False
 
 

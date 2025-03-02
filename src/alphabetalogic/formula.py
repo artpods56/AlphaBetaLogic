@@ -41,7 +41,9 @@ class Variable(Formula):
         self.value = value
 
     def to_prefix_notation(self):
-        return self.letter
+        prefix = "~" if self.negation else ""
+        self.exp = prefix + self.letter
+        return self.exp
 
     def negate(self):
         """Neguje zmienna."""
