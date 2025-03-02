@@ -6,8 +6,7 @@ import networkx as nx
 from ply import lex, yacc
 
 from .formula import Formula, Variable
-from .tableaux_expander import TableauxExpander
-from .utils import Vertex, hierarchy_pos
+from .utils import Vertex
 
 
 class Tree:

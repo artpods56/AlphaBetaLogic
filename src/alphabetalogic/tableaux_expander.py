@@ -23,7 +23,7 @@ class TableauxExpander:
         """
         self.tree = tree
         self.stack = None
-        self.edges = []
+        self.nodes = []
 
     def clear(self, formulas: List[Formula]):
         """
@@ -52,8 +52,8 @@ class TableauxExpander:
         current_stack = self.stack
         self.stack = []
         for argument in current_stack:
-            functors, connections = self.expand(argument)  # Use the expander
-            self.edges.extend(connections)
+            functors, new_nodes = self.expand(argument)  # Use the expander
+            self.nodes.extend(new_nodes)
             self.stack.extend([o for o in functors if not isinstance(o, Variable)])
 
         if self.stack:
