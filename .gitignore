@@ -165,6 +165,8 @@ cython_debug/
 
 #ply
 .out
+parser.out
+parsetab.py
 
 #networkx
 .png
