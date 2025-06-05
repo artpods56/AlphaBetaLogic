@@ -4,7 +4,7 @@ from alphabetalogic.formula import (Conjunction, Disjunction, Equality,
                                     Implication, Negation, Variable)
 from alphabetalogic.tableaux import Tree
 from alphabetalogic.tableaux_expander import TableauxExpander
-from alphabetalogic.utils import Vertex
+from alphabetalogic.utils import Edge
 
 
 @pytest.fixture
@@ -54,8 +54,8 @@ class TestOperatorExpander:
 
         assert len(tableaux_expander.nodes) == 2, "Implication should create exactly 2 nodes"
 
-        alpha_edge: Vertex = tableaux_expander.nodes[0]
-        beta_edge: Vertex = tableaux_expander.nodes[1]
+        alpha_edge: Edge = tableaux_expander.nodes[0]
+        beta_edge: Edge = tableaux_expander.nodes[1]
 
         assert alpha_edge.beg == beta_edge.beg, "Both nodes should branch from the same parent node"
 
@@ -83,8 +83,8 @@ class TestOperatorExpander:
 
         assert len(tableaux_expander.nodes) == 2
 
-        alpha_edge: Vertex = tableaux_expander.nodes[0]
-        beta_edge: Vertex = tableaux_expander.nodes[1]
+        alpha_edge: Edge = tableaux_expander.nodes[0]
+        beta_edge: Edge = tableaux_expander.nodes[1]
 
         assert alpha_edge.end == beta_edge.beg, "Nodes should share the same parent"
 
@@ -114,8 +114,8 @@ class TestOperatorExpander:
         # should have two nodes in same branch
         assert len(tableaux_expander.nodes) == 2, "Conjunction should create exactly 2 nodes"
 
-        alpha_edge: Vertex = tableaux_expander.nodes[0]
-        beta_edge: Vertex = tableaux_expander.nodes[1]
+        alpha_edge: Edge = tableaux_expander.nodes[0]
+        beta_edge: Edge = tableaux_expander.nodes[1]
 
         # verify the tree structure: alpha_edge.end == beta_edge.beg (connected in same branch)
         assert alpha_edge.end == beta_edge.beg, "Nodes should form a linear branch (second node connected to first)"
@@ -148,8 +148,8 @@ class TestOperatorExpander:
         # should have two nodes in separate branches
         assert len(tableaux_expander.nodes) == 2, "Negated conjunction should create exactly 2 nodes"
 
-        alpha_edge: Vertex = tableaux_expander.nodes[0]
-        beta_edge: Vertex = tableaux_expander.nodes[1]
+        alpha_edge: Edge = tableaux_expander.nodes[0]
+        beta_edge: Edge = tableaux_expander.nodes[1]
 
         # linked nodes have same parent node
         assert alpha_edge.beg == beta_edge.beg, "Both nodes should branch from the same parent (branching structure)"
@@ -183,8 +183,8 @@ class TestOperatorExpander:
         # should have two nodes in separate branches
         assert len(tableaux_expander.nodes) == 2
 
-        alpha_edge: Vertex = tableaux_expander.nodes[0]
-        beta_edge: Vertex = tableaux_expander.nodes[1]
+        alpha_edge: Edge = tableaux_expander.nodes[0]
+        beta_edge: Edge = tableaux_expander.nodes[1]
 
         # linked nodes have same parent node
         assert alpha_edge.beg == beta_edge.beg
@@ -220,8 +220,8 @@ class TestOperatorExpander:
         # should have two nodes in same branch
         assert len(tableaux_expander.nodes) == 2
 
-        alpha_edge: Vertex = tableaux_expander.nodes[0]
-        beta_edge: Vertex = tableaux_expander.nodes[1]
+        alpha_edge: Edge = tableaux_expander.nodes[0]
+        beta_edge: Edge = tableaux_expander.nodes[1]
 
         # verify the tree structure: alpha_edge.end == beta_edge.beg (connected in same branch)
         assert alpha_edge.end == beta_edge.beg
@@ -256,12 +256,12 @@ class TestOperatorExpander:
         assert len(tableaux_expander.nodes) == 4, "Equality should create 4 nodes (2 branches with 2 nodes each)"
 
         # First branch: p and q
-        branch1_edge1: Vertex = tableaux_expander.nodes[0]
-        branch1_edge2: Vertex = tableaux_expander.nodes[1]
+        branch1_edge1: Edge = tableaux_expander.nodes[0]
+        branch1_edge2: Edge = tableaux_expander.nodes[1]
 
         # Second branch: ~p and ~q
-        branch2_edge1: Vertex = tableaux_expander.nodes[2]
-        branch2_edge2: Vertex = tableaux_expander.nodes[3]
+        branch2_edge1: Edge = tableaux_expander.nodes[2]
+        branch2_edge2: Edge = tableaux_expander.nodes[3]
 
         # Verify tree structure for first branch
         assert branch1_edge1.end == branch1_edge2.beg, "First branch should form a linear path"
@@ -308,12 +308,12 @@ class TestOperatorExpander:
         assert len(tableaux_expander.nodes) == 4, "Negated equality should create 4 nodes (2 branches with 2 nodes each)"
 
         # First branch: p and ~q
-        branch1_edge1: Vertex = tableaux_expander.nodes[0]
-        branch1_edge2: Vertex = tableaux_expander.nodes[1]
+        branch1_edge1: Edge = tableaux_expander.nodes[0]
+        branch1_edge2: Edge = tableaux_expander.nodes[1]
 
         # Second branch: ~p and q
-        branch2_edge1: Vertex = tableaux_expander.nodes[2]
-        branch2_edge2: Vertex = tableaux_expander.nodes[3]
+        branch2_edge1: Edge = tableaux_expander.nodes[2]
+        branch2_edge2: Edge = tableaux_expander.nodes[3]
 
         # Verify tree structure for first branch
         assert branch1_edge1.end == branch1_edge2.beg, "First branch should form a linear path"
@@ -417,8 +417,8 @@ class TestParametrizedOperators:
 
         assert len(tableaux_expander.nodes) == expected_nodes
 
-        alpha_edge: Vertex = tableaux_expander.nodes[0]
-        beta_edge: Vertex = tableaux_expander.nodes[1]
+        alpha_edge: Edge = tableaux_expander.nodes[0]
+        beta_edge: Edge = tableaux_expander.nodes[1]
 
         # Check structure
         if expected_structure == "linear":

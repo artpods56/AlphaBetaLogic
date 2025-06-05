@@ -6,7 +6,8 @@ from test_utils.load_test_samples import load_logical_expressions
 
 from alphabetalogic.formula import Formula, Negation
 from alphabetalogic.parser import parse_formula
-from alphabetalogic.tableaux import Tree, Vertex, check_contradictions
+from alphabetalogic.tableaux import Tree, check_contradictions
+from alphabetalogic.utils import Edge
 from alphabetalogic.tableaux_expander import TableauxExpander
 from alphabetalogic.utils import negate_expression
 

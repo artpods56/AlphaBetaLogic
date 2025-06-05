@@ -6,7 +6,7 @@ import networkx as nx
 from ply import lex, yacc
 
 from .formula import Formula, Variable
-from .utils import Vertex
+from .utils import Edge
 
 
 class Tree:
@@ -161,27 +161,6 @@ class Tree:
             pairs.append(self.root[0].exp)
             
         return set(pairs)
-
-
-
-class Vertex:
-    """
-    Klasa reprezentujaca polaczenie dwoch wezlow.
-
-    Attributes
-    ----------
-        beg: object
-            Poczatek wezla.
-        end: object
-            Koniec wezla.
-        desc: str
-            Opis wyrazenia znajdujacego sie w wezle.
-    """
-
-    def __init__(self, beg, end, desc):
-        self.beg = beg
-        self.end = end
-        self.desc: str = desc
 
 
 def check_contradictions(expressions: set) -> bool:

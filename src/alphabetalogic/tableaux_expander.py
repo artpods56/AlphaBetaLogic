@@ -3,7 +3,7 @@ from typing import List
 
 from .formula import (Conjunction, Disjunction, Equality, Formula, Implication,
                       Negation, Operator, Variable)
-from .utils import Vertex
+from .utils import Edge
 
 
 class TableauxExpander:
@@ -150,12 +150,12 @@ class TableauxExpander:
                 functors_list.extend([l_copy, r_copy])
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             l_copy,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
@@ -174,12 +174,12 @@ class TableauxExpander:
                 functors_list.extend([l_copy, r_copy])
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             f,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
@@ -207,12 +207,12 @@ class TableauxExpander:
                 functors_list.extend([l_copy, r_copy])
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             f,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
@@ -232,12 +232,12 @@ class TableauxExpander:
                 functors_list.extend([l_copy, r_copy])
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             l_copy,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
@@ -265,12 +265,12 @@ class TableauxExpander:
                 functors_list.extend([l_copy, r_copy])
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             f,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
@@ -289,12 +289,12 @@ class TableauxExpander:
                 functors_list.extend([l_copy, r_copy])
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             l_copy,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
@@ -336,22 +336,22 @@ class TableauxExpander:
 
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             l_copy,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             f,
                             nl_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             nl_copy,
                             nr_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
@@ -381,22 +381,22 @@ class TableauxExpander:
 
                 vertex_list.extend(
                     [
-                        Vertex(
+                        Edge(
                             f,
                             l_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             l_copy,
                             nr_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             f,
                             nl_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
                         ),
-                        Vertex(
+                        Edge(
                             nl_copy,
                             r_copy,
                             f"{type(formula).__name__} ({Formula.counter}) \n {formula.exp}",
