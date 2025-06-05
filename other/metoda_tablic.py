@@ -164,7 +164,7 @@ def __is_error(obj) -> bool:
     return isinstance(obj, yacc.YaccSymbol) and obj.type == "error"
 
 
-class Vertex:
+class Edge:
     """
     Klasa reprezentujaca polaczenie dwoch wezlow.
 

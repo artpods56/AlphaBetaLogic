@@ -2,7 +2,7 @@ import copy
 
 from ply import lex, yacc
 
-from .utils import Vertex
+from .utils import Edge
 
 
 class Formula:

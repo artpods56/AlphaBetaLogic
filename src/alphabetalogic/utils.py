@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 
-class Vertex:
+class Edge:
     """
     Klasa reprezentujaca polaczenie dwoch wezlow.
 
